@@ -434,18 +434,35 @@ class UsbDataStore:
         return snapshots, scan_error
 
     def load(self) -> List[UsbDeviceSnapshot]:
+        print("[DEBUG] load() called")
         if not os.path.exists(self.json_path):
+            print("[DEBUG] json_path not found:", self.json_path)
             return [self._placeholder("USBデバイス情報が存在しません")]
         try:
             with open(self.json_path, "r", encoding="utf-8") as infile:
                 data = json.load(infile)
         except (OSError, json.JSONDecodeError):
+            print("[DEBUG] JSON load error")
             return [self._placeholder("USBデバイス情報の読み込みに失敗しました")]
         if isinstance(data, dict):
             data = [data]
         if not isinstance(data, list) or not data:
+            print("[DEBUG] data is empty or not a list")
             return [self._placeholder("USBデバイス情報が空です")]
-        return [UsbDeviceSnapshot.from_dict(item) for item in data]
+        devices = [UsbDeviceSnapshot.from_dict(item) for item in data]
+        def sort_key(dev: UsbDeviceSnapshot):
+            def to_int(val):
+                s = str(val).lower()
+                if s.startswith("0x"):
+                    s = s[2:]
+                try:
+                    return int(s, 16)
+                except Exception:
+                    return 0
+            return (to_int(dev.vid), to_int(dev.pid))
+        devices.sort(key=sort_key)
+        print("[DEBUG] ソート後のデバイス順:", [dev.key() for dev in devices])
+        return devices
 
     def _write_json(self, snapshots: List[UsbDeviceSnapshot]) -> None:
         try:
@@ -463,7 +480,7 @@ class UsbDevicesApp:
     # GUI application wrapper for displaying USB device snapshots.
 
     def __init__(self, snapshots: List[UsbDeviceSnapshot], ids_db: UsbIdsDatabase) -> None:
-        self.snapshots = snapshots
+        self.snapshots = self._sort_snapshots(snapshots)
         self.ids_db = ids_db
         self.app = ctk.CTk()
         self.app.title("USB Devices Viewer")
@@ -547,6 +564,29 @@ class UsbDevicesApp:
         self.detail_box.pack(fill="both", expand=True, padx=10, pady=10)
 
         self._update_detail(0)
+
+    @staticmethod
+    def _sort_snapshots(snapshots: List[UsbDeviceSnapshot]) -> List[UsbDeviceSnapshot]:
+        return sorted(
+            snapshots,
+            key=lambda snap: (
+                UsbDevicesApp._id_sort_value(snap.vid),
+                UsbDevicesApp._id_sort_value(snap.pid),
+            ),
+        )
+
+    @staticmethod
+    def _id_sort_value(value: Any) -> Tuple[int, int, str]:
+        if isinstance(value, int):
+            return (0, value, format(value, "04x"))
+        text = str(value or "").strip().lower()
+        if text.startswith("0x"):
+            text = text[2:]
+        try:
+            number = int(text, 16)
+            return (0, number, text)
+        except ValueError:
+            return (1, sys.maxsize, text)
 
     def _on_selection_change(self, _: Optional[str] = None) -> None:
         index = self._selected_index()

@@ -1,16 +1,889 @@
 [
   {
-    "vid": "-",
-    "pid": "-",
-    "manufacturer": "",
-    "product": "",
-    "serial": "",
-    "bus": null,
-    "address": null,
+    "vid": "0x46d",
+    "pid": "0x892",
+    "manufacturer": null,
+    "product": "HD Pro Webcam C920",
+    "serial": "DC1DD6DF",
+    "bus": 1,
+    "address": 13,
     "port_path": [],
-    "device_descriptor": {},
-    "configurations": [],
-    "class_guess": "-",
-    "error": "USBデバイスが見つかりません"
+    "device_descriptor": {
+      "idVendor": 1133,
+      "idProduct": 2194,
+      "bcdDevice": 25,
+      "bDeviceClass": 239,
+      "bDeviceSubClass": 2,
+      "bDeviceProtocol": 1,
+      "bMaxPacketSize0": 64,
+      "iManufacturer": 0,
+      "iProduct": 2,
+      "iSerialNumber": 1,
+      "bNumConfigurations": 1
+    },
+    "configurations": [
+      {
+        "configuration_descriptor": {
+          "bConfigurationValue": 1,
+          "bmAttributes": 128,
+          "bMaxPower": 250,
+          "iConfiguration": 0,
+          "bNumInterfaces": 4
+        },
+        "interfaces": [
+          {
+            "interface_descriptor": {
+              "bInterfaceNumber": 0,
+              "bAlternateSetting": 0,
+              "bNumEndpoints": 1,
+              "bInterfaceClass": 14,
+              "bInterfaceSubClass": 1,
+              "bInterfaceProtocol": 0,
+              "iInterface": 0
+            },
+            "endpoints": []
+          },
+          {
+            "interface_descriptor": {
+              "bInterfaceNumber": 1,
+              "bAlternateSetting": 0,
+              "bNumEndpoints": 0,
+              "bInterfaceClass": 14,
+              "bInterfaceSubClass": 2,
+              "bInterfaceProtocol": 0,
+              "iInterface": 0
+            },
+            "endpoints": []
+          },
+          {
+            "interface_descriptor": {
+              "bInterfaceNumber": 1,
+              "bAlternateSetting": 1,
+              "bNumEndpoints": 1,
+              "bInterfaceClass": 14,
+              "bInterfaceSubClass": 2,
+              "bInterfaceProtocol": 0,
+              "iInterface": 0
+            },
+            "endpoints": []
+          },
+          {
+            "interface_descriptor": {
+              "bInterfaceNumber": 1,
+              "bAlternateSetting": 2,
+              "bNumEndpoints": 1,
+              "bInterfaceClass": 14,
+              "bInterfaceSubClass": 2,
+              "bInterfaceProtocol": 0,
+              "iInterface": 0
+            },
+            "endpoints": []
+          },
+          {
+            "interface_descriptor": {
+              "bInterfaceNumber": 1,
+              "bAlternateSetting": 3,
+              "bNumEndpoints": 1,
+              "bInterfaceClass": 14,
+              "bInterfaceSubClass": 2,
+              "bInterfaceProtocol": 0,
+              "iInterface": 0
+            },
+            "endpoints": []
+          },
+          {
+            "interface_descriptor": {
+              "bInterfaceNumber": 1,
+              "bAlternateSetting": 4,
+              "bNumEndpoints": 1,
+              "bInterfaceClass": 14,
+              "bInterfaceSubClass": 2,
+              "bInterfaceProtocol": 0,
+              "iInterface": 0
+            },
+            "endpoints": []
+          },
+          {
+            "interface_descriptor": {
+              "bInterfaceNumber": 1,
+              "bAlternateSetting": 5,
+              "bNumEndpoints": 1,
+              "bInterfaceClass": 14,
+              "bInterfaceSubClass": 2,
+              "bInterfaceProtocol": 0,
+              "iInterface": 0
+            },
+            "endpoints": []
+          },
+          {
+            "interface_descriptor": {
+              "bInterfaceNumber": 1,
+              "bAlternateSetting": 6,
+              "bNumEndpoints": 1,
+              "bInterfaceClass": 14,
+              "bInterfaceSubClass": 2,
+              "bInterfaceProtocol": 0,
+              "iInterface": 0
+            },
+            "endpoints": []
+          },
+          {
+            "interface_descriptor": {
+              "bInterfaceNumber": 1,
+              "bAlternateSetting": 7,
+              "bNumEndpoints": 1,
+              "bInterfaceClass": 14,
+              "bInterfaceSubClass": 2,
+              "bInterfaceProtocol": 0,
+              "iInterface": 0
+            },
+            "endpoints": []
+          },
+          {
+            "interface_descriptor": {
+              "bInterfaceNumber": 1,
+              "bAlternateSetting": 8,
+              "bNumEndpoints": 1,
+              "bInterfaceClass": 14,
+              "bInterfaceSubClass": 2,
+              "bInterfaceProtocol": 0,
+              "iInterface": 0
+            },
+            "endpoints": []
+          },
+          {
+            "interface_descriptor": {
+              "bInterfaceNumber": 1,
+              "bAlternateSetting": 9,
+              "bNumEndpoints": 1,
+              "bInterfaceClass": 14,
+              "bInterfaceSubClass": 2,
+              "bInterfaceProtocol": 0,
+              "iInterface": 0
+            },
+            "endpoints": []
+          },
+          {
+            "interface_descriptor": {
+              "bInterfaceNumber": 1,
+              "bAlternateSetting": 10,
+              "bNumEndpoints": 1,
+              "bInterfaceClass": 14,
+              "bInterfaceSubClass": 2,
+              "bInterfaceProtocol": 0,
+              "iInterface": 0
+            },
+            "endpoints": []
+          },
+          {
+            "interface_descriptor": {
+              "bInterfaceNumber": 1,
+              "bAlternateSetting": 11,
+              "bNumEndpoints": 1,
+              "bInterfaceClass": 14,
+              "bInterfaceSubClass": 2,
+              "bInterfaceProtocol": 0,
+              "iInterface": 0
+            },
+            "endpoints": []
+          },
+          {
+            "interface_descriptor": {
+              "bInterfaceNumber": 2,
+              "bAlternateSetting": 0,
+              "bNumEndpoints": 0,
+              "bInterfaceClass": 1,
+              "bInterfaceSubClass": 1,
+              "bInterfaceProtocol": 0,
+              "iInterface": 0
+            },
+            "endpoints": []
+          },
+          {
+            "interface_descriptor": {
+              "bInterfaceNumber": 3,
+              "bAlternateSetting": 0,
+              "bNumEndpoints": 0,
+              "bInterfaceClass": 1,
+              "bInterfaceSubClass": 2,
+              "bInterfaceProtocol": 0,
+              "iInterface": 0
+            },
+            "endpoints": []
+          },
+          {
+            "interface_descriptor": {
+              "bInterfaceNumber": 3,
+              "bAlternateSetting": 1,
+              "bNumEndpoints": 1,
+              "bInterfaceClass": 1,
+              "bInterfaceSubClass": 2,
+              "bInterfaceProtocol": 0,
+              "iInterface": 0
+            },
+            "endpoints": []
+          },
+          {
+            "interface_descriptor": {
+              "bInterfaceNumber": 3,
+              "bAlternateSetting": 2,
+              "bNumEndpoints": 1,
+              "bInterfaceClass": 1,
+              "bInterfaceSubClass": 2,
+              "bInterfaceProtocol": 0,
+              "iInterface": 0
+            },
+            "endpoints": []
+          },
+          {
+            "interface_descriptor": {
+              "bInterfaceNumber": 3,
+              "bAlternateSetting": 3,
+              "bNumEndpoints": 1,
+              "bInterfaceClass": 1,
+              "bInterfaceSubClass": 2,
+              "bInterfaceProtocol": 0,
+              "iInterface": 0
+            },
+            "endpoints": []
+          }
+        ]
+      }
+    ],
+    "class_guess": "0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x01,0x01,0x01,0x01,0x01",
+    "error": null
+  },
+  {
+    "vid": "0x2109",
+    "pid": "0x8817",
+    "manufacturer": "VIA Labs, Inc.         ",
+    "product": "USB Billboard Device   ",
+    "serial": "0000000000000001",
+    "bus": 1,
+    "address": 11,
+    "port_path": [],
+    "device_descriptor": {
+      "idVendor": 8457,
+      "idProduct": 34839,
+      "bcdDevice": 1,
+      "bDeviceClass": 17,
+      "bDeviceSubClass": 0,
+      "bDeviceProtocol": 0,
+      "bMaxPacketSize0": 64,
+      "iManufacturer": 1,
+      "iProduct": 2,
+      "iSerialNumber": 3,
+      "bNumConfigurations": 1
+    },
+    "configurations": [
+      {
+        "configuration_descriptor": {
+          "bConfigurationValue": 1,
+          "bmAttributes": 192,
+          "bMaxPower": 50,
+          "iConfiguration": 3,
+          "bNumInterfaces": 1
+        },
+        "interfaces": [
+          {
+            "interface_descriptor": {
+              "bInterfaceNumber": 0,
+              "bAlternateSetting": 0,
+              "bNumEndpoints": 0,
+              "bInterfaceClass": 17,
+              "bInterfaceSubClass": 0,
+              "bInterfaceProtocol": 0,
+              "iInterface": 3
+            },
+            "endpoints": []
+          }
+        ]
+      }
+    ],
+    "class_guess": "0x11",
+    "error": null
+  },
+  {
+    "vid": "0x2109",
+    "pid": "0x2817",
+    "manufacturer": "VIA Labs, Inc.         ",
+    "product": "USB2.0 Hub             ",
+    "serial": null,
+    "bus": 1,
+    "address": 10,
+    "port_path": [],
+    "device_descriptor": {
+      "idVendor": 8457,
+      "idProduct": 10263,
+      "bcdDevice": 36916,
+      "bDeviceClass": 9,
+      "bDeviceSubClass": 0,
+      "bDeviceProtocol": 2,
+      "bMaxPacketSize0": 64,
+      "iManufacturer": 1,
+      "iProduct": 2,
+      "iSerialNumber": 0,
+      "bNumConfigurations": 1
+    },
+    "configurations": [
+      {
+        "configuration_descriptor": {
+          "bConfigurationValue": 1,
+          "bmAttributes": 224,
+          "bMaxPower": 0,
+          "iConfiguration": 0,
+          "bNumInterfaces": 1
+        },
+        "interfaces": [
+          {
+            "interface_descriptor": {
+              "bInterfaceNumber": 0,
+              "bAlternateSetting": 0,
+              "bNumEndpoints": 1,
+              "bInterfaceClass": 9,
+              "bInterfaceSubClass": 0,
+              "bInterfaceProtocol": 1,
+              "iInterface": 0
+            },
+            "endpoints": []
+          },
+          {
+            "interface_descriptor": {
+              "bInterfaceNumber": 0,
+              "bAlternateSetting": 1,
+              "bNumEndpoints": 1,
+              "bInterfaceClass": 9,
+              "bInterfaceSubClass": 0,
+              "bInterfaceProtocol": 2,
+              "iInterface": 0
+            },
+            "endpoints": []
+          }
+        ]
+      }
+    ],
+    "class_guess": "0x09,0x09",
+    "error": null
+  },
+  {
+    "vid": "0xbda",
+    "pid": "0x2172",
+    "manufacturer": "Realtek",
+    "product": "BillBoard Device",
+    "serial": "00000000000000000",
+    "bus": 1,
+    "address": 9,
+    "port_path": [],
+    "device_descriptor": {
+      "idVendor": 3034,
+      "idProduct": 8562,
+      "bcdDevice": 256,
+      "bDeviceClass": 17,
+      "bDeviceSubClass": 0,
+      "bDeviceProtocol": 0,
+      "bMaxPacketSize0": 64,
+      "iManufacturer": 17,
+      "iProduct": 18,
+      "iSerialNumber": 19,
+      "bNumConfigurations": 1
+    },
+    "configurations": [
+      {
+        "configuration_descriptor": {
+          "bConfigurationValue": 1,
+          "bmAttributes": 128,
+          "bMaxPower": 1,
+          "iConfiguration": 18,
+          "bNumInterfaces": 1
+        },
+        "interfaces": [
+          {
+            "interface_descriptor": {
+              "bInterfaceNumber": 0,
+              "bAlternateSetting": 0,
+              "bNumEndpoints": 0,
+              "bInterfaceClass": 17,
+              "bInterfaceSubClass": 0,
+              "bInterfaceProtocol": 0,
+              "iInterface": 18
+            },
+            "endpoints": []
+          }
+        ]
+      }
+    ],
+    "class_guess": "0x11",
+    "error": null
+  },
+  {
+    "vid": "0x2109",
+    "pid": "0x2817",
+    "manufacturer": "VIA Labs, Inc.         ",
+    "product": "USB2.0 Hub             ",
+    "serial": null,
+    "bus": 1,
+    "address": 8,
+    "port_path": [],
+    "device_descriptor": {
+      "idVendor": 8457,
+      "idProduct": 10263,
+      "bcdDevice": 36916,
+      "bDeviceClass": 9,
+      "bDeviceSubClass": 0,
+      "bDeviceProtocol": 2,
+      "bMaxPacketSize0": 64,
+      "iManufacturer": 1,
+      "iProduct": 2,
+      "iSerialNumber": 0,
+      "bNumConfigurations": 1
+    },
+    "configurations": [
+      {
+        "configuration_descriptor": {
+          "bConfigurationValue": 1,
+          "bmAttributes": 224,
+          "bMaxPower": 0,
+          "iConfiguration": 0,
+          "bNumInterfaces": 1
+        },
+        "interfaces": [
+          {
+            "interface_descriptor": {
+              "bInterfaceNumber": 0,
+              "bAlternateSetting": 0,
+              "bNumEndpoints": 1,
+              "bInterfaceClass": 9,
+              "bInterfaceSubClass": 0,
+              "bInterfaceProtocol": 1,
+              "iInterface": 0
+            },
+            "endpoints": []
+          },
+          {
+            "interface_descriptor": {
+              "bInterfaceNumber": 0,
+              "bAlternateSetting": 1,
+              "bNumEndpoints": 1,
+              "bInterfaceClass": 9,
+              "bInterfaceSubClass": 0,
+              "bInterfaceProtocol": 2,
+              "iInterface": 0
+            },
+            "endpoints": []
+          }
+        ]
+      }
+    ],
+    "class_guess": "0x09,0x09",
+    "error": null
+  },
+  {
+    "vid": "0x2109",
+    "pid": "0x817",
+    "manufacturer": "VIA Labs, Inc.         ",
+    "product": "USB3.0 Hub             ",
+    "serial": null,
+    "bus": 1,
+    "address": 7,
+    "port_path": [],
+    "device_descriptor": {
+      "idVendor": 8457,
+      "idProduct": 2071,
+      "bcdDevice": 36916,
+      "bDeviceClass": 9,
+      "bDeviceSubClass": 0,
+      "bDeviceProtocol": 3,
+      "bMaxPacketSize0": 9,
+      "iManufacturer": 1,
+      "iProduct": 2,
+      "iSerialNumber": 0,
+      "bNumConfigurations": 1
+    },
+    "configurations": [
+      {
+        "configuration_descriptor": {
+          "bConfigurationValue": 1,
+          "bmAttributes": 224,
+          "bMaxPower": 0,
+          "iConfiguration": 0,
+          "bNumInterfaces": 1
+        },
+        "interfaces": [
+          {
+            "interface_descriptor": {
+              "bInterfaceNumber": 0,
+              "bAlternateSetting": 0,
+              "bNumEndpoints": 1,
+              "bInterfaceClass": 9,
+              "bInterfaceSubClass": 0,
+              "bInterfaceProtocol": 0,
+              "iInterface": 0
+            },
+            "endpoints": []
+          }
+        ]
+      }
+    ],
+    "class_guess": "0x09",
+    "error": null
+  },
+  {
+    "vid": "0x1a40",
+    "pid": "0x101",
+    "manufacturer": null,
+    "product": "USB2.0 HUB",
+    "serial": null,
+    "bus": 1,
+    "address": 6,
+    "port_path": [],
+    "device_descriptor": {
+      "idVendor": 6720,
+      "idProduct": 257,
+      "bcdDevice": 256,
+      "bDeviceClass": 9,
+      "bDeviceSubClass": 0,
+      "bDeviceProtocol": 1,
+      "bMaxPacketSize0": 64,
+      "iManufacturer": 0,
+      "iProduct": 1,
+      "iSerialNumber": 0,
+      "bNumConfigurations": 1
+    },
+    "configurations": [
+      {
+        "configuration_descriptor": {
+          "bConfigurationValue": 1,
+          "bmAttributes": 224,
+          "bMaxPower": 50,
+          "iConfiguration": 0,
+          "bNumInterfaces": 1
+        },
+        "interfaces": [
+          {
+            "interface_descriptor": {
+              "bInterfaceNumber": 0,
+              "bAlternateSetting": 0,
+              "bNumEndpoints": 1,
+              "bInterfaceClass": 9,
+              "bInterfaceSubClass": 0,
+              "bInterfaceProtocol": 0,
+              "iInterface": 0
+            },
+            "endpoints": []
+          }
+        ]
+      }
+    ],
+    "class_guess": "0x09",
+    "error": null
+  },
+  {
+    "vid": "0x2109",
+    "pid": "0x817",
+    "manufacturer": "VIA Labs, Inc.         ",
+    "product": "USB3.0 Hub             ",
+    "serial": null,
+    "bus": 1,
+    "address": 5,
+    "port_path": [],
+    "device_descriptor": {
+      "idVendor": 8457,
+      "idProduct": 2071,
+      "bcdDevice": 36916,
+      "bDeviceClass": 9,
+      "bDeviceSubClass": 0,
+      "bDeviceProtocol": 3,
+      "bMaxPacketSize0": 9,
+      "iManufacturer": 1,
+      "iProduct": 2,
+      "iSerialNumber": 0,
+      "bNumConfigurations": 1
+    },
+    "configurations": [
+      {
+        "configuration_descriptor": {
+          "bConfigurationValue": 1,
+          "bmAttributes": 224,
+          "bMaxPower": 0,
+          "iConfiguration": 0,
+          "bNumInterfaces": 1
+        },
+        "interfaces": [
+          {
+            "interface_descriptor": {
+              "bInterfaceNumber": 0,
+              "bAlternateSetting": 0,
+              "bNumEndpoints": 1,
+              "bInterfaceClass": 9,
+              "bInterfaceSubClass": 0,
+              "bInterfaceProtocol": 0,
+              "iInterface": 0
+            },
+            "endpoints": []
+          }
+        ]
+      }
+    ],
+    "class_guess": "0x09",
+    "error": null
+  },
+  {
+    "vid": "0x2537",
+    "pid": "0x1081",
+    "manufacturer": "Norelsys",
+    "product": "NS1081",
+    "serial": "87FAB6BEAD9B",
+    "bus": 1,
+    "address": 4,
+    "port_path": [],
+    "device_descriptor": {
+      "idVendor": 9527,
+      "idProduct": 4225,
+      "bcdDevice": 256,
+      "bDeviceClass": 0,
+      "bDeviceSubClass": 0,
+      "bDeviceProtocol": 0,
+      "bMaxPacketSize0": 9,
+      "iManufacturer": 1,
+      "iProduct": 2,
+      "iSerialNumber": 3,
+      "bNumConfigurations": 1
+    },
+    "configurations": [
+      {
+        "configuration_descriptor": {
+          "bConfigurationValue": 1,
+          "bmAttributes": 128,
+          "bMaxPower": 19,
+          "iConfiguration": 0,
+          "bNumInterfaces": 1
+        },
+        "interfaces": [
+          {
+            "interface_descriptor": {
+              "bInterfaceNumber": 0,
+              "bAlternateSetting": 0,
+              "bNumEndpoints": 2,
+              "bInterfaceClass": 8,
+              "bInterfaceSubClass": 6,
+              "bInterfaceProtocol": 80,
+              "iInterface": 0
+            },
+            "endpoints": []
+          }
+        ]
+      }
+    ],
+    "class_guess": "0x08",
+    "error": null
+  },
+  {
+    "vid": "0xbda",
+    "pid": "0x8153",
+    "manufacturer": "Realtek",
+    "product": "USB 10/100/1000 LAN",
+    "serial": "000001",
+    "bus": 1,
+    "address": 3,
+    "port_path": [],
+    "device_descriptor": {
+      "idVendor": 3034,
+      "idProduct": 33107,
+      "bcdDevice": 12288,
+      "bDeviceClass": 0,
+      "bDeviceSubClass": 0,
+      "bDeviceProtocol": 0,
+      "bMaxPacketSize0": 9,
+      "iManufacturer": 1,
+      "iProduct": 2,
+      "iSerialNumber": 6,
+      "bNumConfigurations": 2
+    },
+    "configurations": [
+      {
+        "configuration_descriptor": {
+          "bConfigurationValue": 1,
+          "bmAttributes": 160,
+          "bMaxPower": 36,
+          "iConfiguration": 0,
+          "bNumInterfaces": 1
+        },
+        "interfaces": [
+          {
+            "interface_descriptor": {
+              "bInterfaceNumber": 0,
+              "bAlternateSetting": 0,
+              "bNumEndpoints": 3,
+              "bInterfaceClass": 255,
+              "bInterfaceSubClass": 255,
+              "bInterfaceProtocol": 0,
+              "iInterface": 0
+            },
+            "endpoints": []
+          }
+        ]
+      },
+      {
+        "configuration_descriptor": {
+          "bConfigurationValue": 2,
+          "bmAttributes": 160,
+          "bMaxPower": 36,
+          "iConfiguration": 0,
+          "bNumInterfaces": 2
+        },
+        "interfaces": [
+          {
+            "interface_descriptor": {
+              "bInterfaceNumber": 0,
+              "bAlternateSetting": 0,
+              "bNumEndpoints": 1,
+              "bInterfaceClass": 2,
+              "bInterfaceSubClass": 6,
+              "bInterfaceProtocol": 0,
+              "iInterface": 5
+            },
+            "endpoints": []
+          },
+          {
+            "interface_descriptor": {
+              "bInterfaceNumber": 1,
+              "bAlternateSetting": 0,
+              "bNumEndpoints": 0,
+              "bInterfaceClass": 10,
+              "bInterfaceSubClass": 0,
+              "bInterfaceProtocol": 0,
+              "iInterface": 0
+            },
+            "endpoints": []
+          },
+          {
+            "interface_descriptor": {
+              "bInterfaceNumber": 1,
+              "bAlternateSetting": 1,
+              "bNumEndpoints": 2,
+              "bInterfaceClass": 10,
+              "bInterfaceSubClass": 0,
+              "bInterfaceProtocol": 0,
+              "iInterface": 4
+            },
+            "endpoints": []
+          }
+        ]
+      }
+    ],
+    "class_guess": "Vendor,CDC-ACM,0x0A,0x0A",
+    "error": null
+  },
+  {
+    "vid": "0x2109",
+    "pid": "0x2817",
+    "manufacturer": "VIA Labs, Inc.         ",
+    "product": "USB2.0 Hub             ",
+    "serial": "000000000",
+    "bus": 1,
+    "address": 2,
+    "port_path": [],
+    "device_descriptor": {
+      "idVendor": 8457,
+      "idProduct": 10263,
+      "bcdDevice": 1155,
+      "bDeviceClass": 9,
+      "bDeviceSubClass": 0,
+      "bDeviceProtocol": 2,
+      "bMaxPacketSize0": 64,
+      "iManufacturer": 1,
+      "iProduct": 2,
+      "iSerialNumber": 3,
+      "bNumConfigurations": 1
+    },
+    "configurations": [
+      {
+        "configuration_descriptor": {
+          "bConfigurationValue": 1,
+          "bmAttributes": 224,
+          "bMaxPower": 0,
+          "iConfiguration": 0,
+          "bNumInterfaces": 1
+        },
+        "interfaces": [
+          {
+            "interface_descriptor": {
+              "bInterfaceNumber": 0,
+              "bAlternateSetting": 0,
+              "bNumEndpoints": 1,
+              "bInterfaceClass": 9,
+              "bInterfaceSubClass": 0,
+              "bInterfaceProtocol": 1,
+              "iInterface": 0
+            },
+            "endpoints": []
+          },
+          {
+            "interface_descriptor": {
+              "bInterfaceNumber": 0,
+              "bAlternateSetting": 1,
+              "bNumEndpoints": 1,
+              "bInterfaceClass": 9,
+              "bInterfaceSubClass": 0,
+              "bInterfaceProtocol": 2,
+              "iInterface": 0
+            },
+            "endpoints": []
+          }
+        ]
+      }
+    ],
+    "class_guess": "0x09,0x09",
+    "error": null
+  },
+  {
+    "vid": "0x2109",
+    "pid": "0x817",
+    "manufacturer": "VIA Labs, Inc.         ",
+    "product": "USB3.0 Hub             ",
+    "serial": "000000000",
+    "bus": 1,
+    "address": 1,
+    "port_path": [],
+    "device_descriptor": {
+      "idVendor": 8457,
+      "idProduct": 2071,
+      "bcdDevice": 1155,
+      "bDeviceClass": 9,
+      "bDeviceSubClass": 0,
+      "bDeviceProtocol": 3,
+      "bMaxPacketSize0": 9,
+      "iManufacturer": 1,
+      "iProduct": 2,
+      "iSerialNumber": 3,
+      "bNumConfigurations": 1
+    },
+    "configurations": [
+      {
+        "configuration_descriptor": {
+          "bConfigurationValue": 1,
+          "bmAttributes": 224,
+          "bMaxPower": 0,
+          "iConfiguration": 0,
+          "bNumInterfaces": 1
+        },
+        "interfaces": [
+          {
+            "interface_descriptor": {
+              "bInterfaceNumber": 0,
+              "bAlternateSetting": 0,
+              "bNumEndpoints": 1,
+              "bInterfaceClass": 9,
+              "bInterfaceSubClass": 0,
+              "bInterfaceProtocol": 0,
+              "iInterface": 0
+            },
+            "endpoints": []
+          }
+        ]
+      }
+    ],
+    "class_guess": "0x09",
+    "error": null
   }
 ]
