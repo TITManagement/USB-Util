@@ -15,6 +15,20 @@ USB-utilは、接続済みのUSBデバイスをスキャンし、取得した詳
 - libusb 1.0（PyUSBのバックエンドとして利用）
 - ネイティブライブラリのビルド/読み込みに必要な環境（OS付属またはパッケージ管理システムでインストール）
 
+### OS別セットアップ
+
+#### macOS
+- Homebrewで `brew install libusb`
+
+#### Ubuntu 24.04
+- `sudo apt update && sudo apt install libusb-1.0-0`
+
+#### Windows
+- ZadigツールでWinUSB/libusbKドライバを導入（https://zadig.akeo.ie/）
+- Python仮想環境有効化: `venv\Scripts\activate`（PowerShell/コマンドプロンプト）
+
+> **注意**: Windowsは管理者権限で実行することを推奨します。
+
 ### Python依存パッケージ
 ```
 pyusb

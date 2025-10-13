@@ -1,3 +1,18 @@
+# USB-util: USBデバイス情報のスキャン・表示・保存・補完を行うPython GUIツール
+
+# 主な機能
+# - PyUSBでUSBデバイスの詳細情報取得
+# - usb.idsによるベンダー名・製品名補完
+# - JSON保存・読み込み
+# - CustomTkinter GUIで情報表示
+# - 権限不足/バックエンド未導入時のエラー表示
+#
+# クラス構成
+# - UsbScanner: USBデバイスのスキャン
+# - UsbIdsDatabase: usb.idsパースと名称解決
+# - UsbDeviceSnapshot: デバイス情報構造体
+# - UsbDataStore: JSON保存・読込管理
+# - UsbDevicesApp: GUI表示
 import json
 import os
 import sys
@@ -39,7 +54,6 @@ def find_usb_ids_path() -> str:
 
 
 def _normalize_usb_id(value: Any) -> Optional[str]:
-    """Normalize VID/PID values to lowercase hex without 0x prefix."""
     if value is None:
         return None
     if isinstance(value, int):
@@ -51,8 +65,8 @@ def _normalize_usb_id(value: Any) -> Optional[str]:
 
 
 class UsbIdsDatabase:
-    """Lazy parser for usb.ids that provides vendor/product lookups."""
-
+    # usb.idsファイルを遅延パースし、ベンダーID・プロダクトIDから名称を解決するクラス。
+ 
     def __init__(self, ids_path: Optional[str] = None) -> None:
         self.ids_path = ids_path or find_usb_ids_path()
         self._cache: Optional[Dict[str, Dict[str, Any]]] = None
@@ -199,7 +213,10 @@ class UsbDeviceSnapshot:
 
 
 class UsbScanner:
-    """Encapsulate PyUSB scanning with backend resolution and error handling."""
+    # PyUSBを用いてUSBデバイスをスキャンし、詳細情報を取得するクラス。
+    """
+    Encapsulate PyUSB scanning with backend resolution and error handling.
+    """
 
     def scan(self) -> Tuple[List[UsbDeviceSnapshot], Optional[str]]:
         try:
@@ -399,7 +416,8 @@ class UsbScanner:
 
 
 class UsbDataStore:
-    """Manage persistence of USB snapshots."""
+    # USBデバイススナップショットのJSON保存・読み込みを管理するクラス。
+    # USBデバイススナップショットのJSON保存・読み込みを管理するクラス。
 
     def __init__(self, json_path: str, scanner: UsbScanner) -> None:
         self.json_path = json_path
@@ -442,7 +460,7 @@ class UsbDataStore:
 
 
 class UsbDevicesApp:
-    """GUI application wrapper for displaying USB device snapshots."""
+    # GUI application wrapper for displaying USB device snapshots.
 
     def __init__(self, snapshots: List[UsbDeviceSnapshot], ids_db: UsbIdsDatabase) -> None:
         self.snapshots = snapshots
