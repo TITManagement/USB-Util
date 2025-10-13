@@ -1,0 +1,16 @@
+[
+  {
+    "vid": "-",
+    "pid": "-",
+    "manufacturer": "",
+    "product": "",
+    "serial": "",
+    "bus": null,
+    "address": null,
+    "port_path": [],
+    "device_descriptor": {},
+    "configurations": [],
+    "class_guess": "-",
+    "error": "USBデバイスが見つかりません"
+  }
+]
