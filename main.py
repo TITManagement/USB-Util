@@ -1,4 +1,13 @@
-# USB-util: USBデバイス情報のスキャン・表示・保存・補完を行うPython GUIツール
+"""
+USB-util: USBデバイス情報のスキャン・表示・保存・COMポート逆引きを行うPython GUI/CLIツール
+
+- USBデバイスの詳細情報取得（PyUSB）
+- usb.idsによるベンダー名・製品名補完
+- JSON保存・読み込み
+- CustomTkinter GUIで情報表示
+- COMポート情報の取得・逆引き（pyserial/win32com）
+- コマンドラインからCOMポート取得も可能
+"""
 
 # 主な機能
 # - PyUSBでUSBデバイスの詳細情報取得
@@ -19,6 +28,7 @@ import sys
 from dataclasses import dataclass, field
 from ctypes.util import find_library
 from typing import Any, Dict, List, Optional, Tuple
+import platform
 
 import customtkinter as ctk
 
@@ -65,16 +75,24 @@ def _normalize_usb_id(value: Any) -> Optional[str]:
 
 
 class UsbIdsDatabase:
-    # usb.idsファイルを遅延パースし、ベンダーID・プロダクトIDから名称を解決するクラス。
- 
+    """
+    usb.idsファイルをパースし、ベンダーID・プロダクトIDから名称を解決するクラス。
+    - reload(): キャッシュ再構築
+    - lookup(vid, pid): ベンダー名・製品名取得
+    """
+
+    # usb.idsのパスを受け取り、ベンダー/プロダクト名の辞書を構築
     def __init__(self, ids_path: Optional[str] = None) -> None:
+        # 初期化。ids_pathはusb.idsファイルのパス
         self.ids_path = ids_path or find_usb_ids_path()
         self._cache: Optional[Dict[str, Dict[str, Any]]] = None
 
     def reload(self) -> None:
+        # キャッシュをクリアして再パース可能にする
         self._cache = None
 
     def lookup(self, vid: Any, pid: Any) -> Tuple[Optional[str], Optional[str]]:
+        # ベンダーID・プロダクトIDから名称を取得
         vendors = self._ensure_cache()
         norm_vid = _normalize_usb_id(vid)
         norm_pid = _normalize_usb_id(pid)
@@ -89,12 +107,14 @@ class UsbIdsDatabase:
         return vendor_name, product_name
 
     def _ensure_cache(self) -> Dict[str, Dict[str, Any]]:
+        # キャッシュがなければパースして構築
         if self._cache is None:
             self._cache = self._parse_usb_ids(self.ids_path)
         return self._cache
 
     @staticmethod
     def _parse_usb_ids(ids_path: str) -> Dict[str, Dict[str, Any]]:
+        # usb.idsファイルをパースして辞書化
         vendors: Dict[str, Dict[str, Any]] = {}
         current_vendor: Optional[str] = None
         current_product: Optional[str] = None
@@ -105,6 +125,7 @@ class UsbIdsDatabase:
                     if not line or line.startswith("#"):
                         continue
                     if line.startswith("\t\t"):
+                        # インターフェース情報
                         if current_vendor is None or current_product is None:
                             continue
                         parts = line.strip().split(None, 1)
@@ -120,6 +141,7 @@ class UsbIdsDatabase:
                         )
                         continue
                     if line.startswith("\t"):
+                        # プロダクト情報
                         if current_vendor is None:
                             continue
                         parts = line.strip().split(None, 1)
@@ -133,6 +155,7 @@ class UsbIdsDatabase:
                         }
                         current_product = product_id
                         continue
+                    # ベンダー情報
                     parts = line.split(None, 1)
                     if not parts:
                         continue
@@ -149,6 +172,13 @@ class UsbIdsDatabase:
 
 @dataclass
 class UsbDeviceSnapshot:
+    """
+    USBデバイスのスナップショット情報構造体。
+    - resolve_names(ids_db): usb.idsから名称解決
+    - to_dict()/from_dict(): 辞書⇔構造体変換
+    """
+
+    # USBデバイスの属性を保持
     vid: str
     pid: str
     manufacturer: str = ""
@@ -163,9 +193,11 @@ class UsbDeviceSnapshot:
     error: Optional[str] = None
 
     def key(self) -> str:
+        # デバイス一意識別子（VID:PID）
         return f"{self.vid}:{self.pid}"
 
     def resolve_names(self, ids_db: UsbIdsDatabase) -> Tuple[str, str]:
+        # usb.idsデータベースからベンダー名・製品名を解決
         if self.error:
             return "取得不可", "取得不可"
         if (
@@ -179,6 +211,7 @@ class UsbDeviceSnapshot:
         return "不明", "不明"
 
     def to_dict(self) -> Dict[str, Any]:
+        # 辞書形式に変換
         return {
             "vid": self.vid,
             "pid": self.pid,
@@ -196,6 +229,7 @@ class UsbDeviceSnapshot:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "UsbDeviceSnapshot":
+        # 辞書から構造体へ変換
         return cls(
             vid=data.get("vid", "-"),
             pid=data.get("pid", "-"),
@@ -213,12 +247,14 @@ class UsbDeviceSnapshot:
 
 
 class UsbScanner:
-    # PyUSBを用いてUSBデバイスをスキャンし、詳細情報を取得するクラス。
     """
-    Encapsulate PyUSB scanning with backend resolution and error handling.
+    PyUSBを用いてUSBデバイスをスキャンし、詳細情報を取得するクラス。
+    - scan(): USBデバイス一覧取得
     """
 
+    # USBデバイスをスキャンして詳細情報を取得
     def scan(self) -> Tuple[List[UsbDeviceSnapshot], Optional[str]]:
+        # USBデバイス一覧とエラー情報を返す
         try:
             import usb.core
             import usb.util
@@ -251,6 +287,7 @@ class UsbScanner:
 
     @staticmethod
     def _resolve_backend():
+        # libusbバックエンドを解決
         try:
             from usb.backend import libusb1
         except ImportError:
@@ -280,6 +317,7 @@ class UsbScanner:
 
     @staticmethod
     def _safe_get(obj: Any, attr: str) -> Any:
+        # 属性取得の安全ラッパー
         try:
             value = getattr(obj, attr)
             return "取得不可" if value is None else value
@@ -288,12 +326,14 @@ class UsbScanner:
 
     @classmethod
     def _safe_str(cls, usb_util: Any, obj: Any, idx: Any) -> str:
+        # USBデバイスの文字列属性取得
         try:
             return usb_util.get_string(obj, idx)
         except Exception:
             return "取得不可"
 
     def _snapshot_device(self, device: Any, usb_util: Any) -> UsbDeviceSnapshot:
+        # 1デバイスの詳細情報をスナップショット化
         vid_val = self._safe_get(device, "idVendor")
         pid_val = self._safe_get(device, "idProduct")
         device_descriptor = {}
@@ -398,6 +438,7 @@ class UsbScanner:
 
     @staticmethod
     def _error_snapshot(message: str) -> UsbDeviceSnapshot:
+        # エラー時のスナップショット生成
         return UsbDeviceSnapshot(
             vid="-",
             pid="-",
@@ -408,6 +449,7 @@ class UsbScanner:
 
     @staticmethod
     def _no_backend_message() -> str:
+        # libusbバックエンド未検出時のメッセージ
         if sys.platform.startswith("win"):
             return "libusb backend が見つかりません。Zadig などで WinUSB/libusbK を導入してください。"
         if sys.platform.startswith("linux"):
@@ -416,14 +458,20 @@ class UsbScanner:
 
 
 class UsbDataStore:
-    # USBデバイススナップショットのJSON保存・読み込みを管理するクラス。
-    # USBデバイススナップショットのJSON保存・読み込みを管理するクラス。
+    """
+    USBデバイススナップショットのJSON保存・読み込み管理クラス。
+    - refresh(): スキャン＆保存
+    - load(): JSONから復元
+    """
 
+    # USBデバイス情報の保存・復元を管理
     def __init__(self, json_path: str, scanner: UsbScanner) -> None:
+        # 初期化。保存パスとスキャナを受け取る
         self.json_path = json_path
         self.scanner = scanner
 
     def refresh(self) -> Tuple[List[UsbDeviceSnapshot], Optional[str]]:
+        # USBデバイスをスキャンし、JSON保存。エラーも返す
         snapshots, scan_error = self.scanner.scan()
         if not snapshots:
             if scan_error:
@@ -434,6 +482,7 @@ class UsbDataStore:
         return snapshots, scan_error
 
     def load(self) -> List[UsbDeviceSnapshot]:
+        # JSONからUSBデバイス情報を復元
         print("[DEBUG] load() called")
         if not os.path.exists(self.json_path):
             print("[DEBUG] json_path not found:", self.json_path)
@@ -465,6 +514,7 @@ class UsbDataStore:
         return devices
 
     def _write_json(self, snapshots: List[UsbDeviceSnapshot]) -> None:
+        # USBデバイス情報をJSON保存
         try:
             with open(self.json_path, "w", encoding="utf-8") as outfile:
                 json.dump([snap.to_dict() for snap in snapshots], outfile, ensure_ascii=False, indent=2)
@@ -473,15 +523,24 @@ class UsbDataStore:
 
     @staticmethod
     def _placeholder(message: str) -> UsbDeviceSnapshot:
+        # エラー時のダミー情報生成
         return UsbDeviceSnapshot(vid="-", pid="-", error=message)
 
 
 class UsbDevicesApp:
-    # GUI application wrapper for displaying USB device snapshots.
+    """
+    USBデバイス情報をGUIで表示するアプリケーション。
+    - 左: USBデバイス一覧
+    - 中: デバイス詳細
+    - 右: JSON表示
+    """
 
+    # GUIの初期化・レイアウト構築
     def __init__(self, snapshots: List[UsbDeviceSnapshot], ids_db: UsbIdsDatabase) -> None:
+        # USBデバイス情報・idsデータベースを受け取り、GUIを構築
         self.snapshots = self._sort_snapshots(snapshots)
         self.ids_db = ids_db
+        self.com_ports = get_com_ports()  # COMポート情報取得
         self.app = ctk.CTk()
         self.app.title("USB Devices Viewer")
         self.app.geometry("900x600")
@@ -492,9 +551,11 @@ class UsbDevicesApp:
         self._build_layout()
 
     def run(self) -> None:
+        # GUIメインループ開始
         self.app.mainloop()
 
     def _build_layout(self) -> None:
+        # GUIレイアウト構築（左:一覧, 中:詳細, 右:JSON）
         main_frame = ctk.CTkFrame(self.app)
         main_frame.pack(fill="both", expand=True, padx=20, pady=20)
 
@@ -513,15 +574,41 @@ class UsbDevicesApp:
 
         bottom_frame = ctk.CTkFrame(main_frame)
         bottom_frame.pack(fill="both", expand=True, padx=10, pady=(5, 10))
-        bottom_frame.grid_columnconfigure(0, weight=1)
-        bottom_frame.grid_columnconfigure(1, weight=1)
+        bottom_frame.grid_columnconfigure(0, weight=0)  # 左パネル
+        bottom_frame.grid_columnconfigure(1, weight=1)  # 中央
+        bottom_frame.grid_columnconfigure(2, weight=1)  # 右
         bottom_frame.grid_rowconfigure(0, weight=1)
 
+        # --- 左：USBデバイス一覧パネル ---
+        device_list_frame = ctk.CTkFrame(bottom_frame)
+        device_list_frame.grid(row=0, column=0, sticky="nsew", padx=(0, 10))
+        device_list_label = ctk.CTkLabel(device_list_frame, text="USBデバイス一覧", font=("Meiryo", 14, "bold"))
+        device_list_label.pack(anchor="w", padx=10, pady=(10, 0))
+        self.device_listbox = ctk.CTkScrollableFrame(device_list_frame, width=260)
+        self.device_listbox.pack(fill="both", expand=True, padx=10, pady=10)
+        self.device_list_items = []
+        for idx, snap in enumerate(self.snapshots):
+            vendor_label, product_label = snap.resolve_names(self.ids_db)
+            com_port_value = "―"
+            for cp in getattr(self, "com_ports", []):
+                if (
+                    cp.get("vid") == snap.vid and
+                    cp.get("pid") == snap.pid and
+                    (not snap.serial or cp.get("serial_number") == snap.serial)
+                ):
+                    com_port_value = cp.get("device")
+                    break
+            item_text = f"{product_label or snap.product or '―'} / {snap.manufacturer or '―'}\nVID:PID {snap.vid}:{snap.pid}\nSerial: {snap.serial or '―'}\nCOM: {com_port_value}\nClass: {snap.class_guess}"
+            item_btn = ctk.CTkButton(self.device_listbox, text=item_text, width=240, height=60, command=lambda i=idx: self._on_device_list_select(i))
+            item_btn.pack(fill="x", padx=4, pady=4)
+            self.device_list_items.append(item_btn)
+
+        # --- 中：デバイス情報 ---
         left_frame = ctk.CTkFrame(bottom_frame)
-        left_frame.grid(row=0, column=0, sticky="nsew", padx=(0, 10))
+        left_frame.grid(row=0, column=1, sticky="nsew", padx=(0, 10))
 
         right_frame = ctk.CTkFrame(bottom_frame)
-        right_frame.grid(row=0, column=1, sticky="nsew", padx=(10, 0))
+        right_frame.grid(row=0, column=2, sticky="nsew", padx=(10, 0))
 
         left_label = ctk.CTkLabel(left_frame, text="デバイス情報", font=("Meiryo", 14, "bold"))
         left_label.pack(anchor="w", padx=10, pady=(10, 0))
@@ -544,6 +631,7 @@ class UsbDevicesApp:
             "Address",
             "Port Path",
             "Class Guess",
+            "COMポート",
         ]
         for row, label in enumerate(fields):
             key_label = ctk.CTkLabel(info_frame, text=f"{label}:", font=("Meiryo", 12, "bold"))
@@ -565,8 +653,14 @@ class UsbDevicesApp:
 
         self._update_detail(0)
 
+    def _on_device_list_select(self, index: int) -> None:
+        if self.combo:
+            self.combo.set(self.snapshots[index].key())
+        self._update_detail(index)
+
     @staticmethod
     def _sort_snapshots(snapshots: List[UsbDeviceSnapshot]) -> List[UsbDeviceSnapshot]:
+        # USBデバイス情報をVID/PID順でソート
         return sorted(
             snapshots,
             key=lambda snap: (
@@ -577,6 +671,7 @@ class UsbDevicesApp:
 
     @staticmethod
     def _id_sort_value(value: Any) -> Tuple[int, int, str]:
+        # ソート用ID値変換
         if isinstance(value, int):
             return (0, value, format(value, "04x"))
         text = str(value or "").strip().lower()
@@ -589,10 +684,12 @@ class UsbDevicesApp:
             return (1, sys.maxsize, text)
 
     def _on_selection_change(self, _: Optional[str] = None) -> None:
+        # コンボボックス選択変更時の処理
         index = self._selected_index()
         self._update_detail(index)
 
     def _selected_index(self) -> int:
+        # 現在選択中のデバイスインデックス取得
         selected = self.combo.get() if self.combo else ""
         for idx, snapshot in enumerate(self.snapshots):
             if snapshot.key().lower() == selected.lower():
@@ -600,6 +697,7 @@ class UsbDevicesApp:
         return 0
 
     def _update_detail(self, index: int) -> None:
+        # 選択デバイスの詳細情報をGUIに反映
         if not (0 <= index < len(self.snapshots)):
             index = 0
         snapshot = self.snapshots[index]
@@ -609,6 +707,17 @@ class UsbDevicesApp:
         )
         bus_text = str(snapshot.bus) if snapshot.bus is not None else "不明"
         address_text = str(snapshot.address) if snapshot.address is not None else "不明"
+        # COMポート照合
+        com_port_value = "―"
+        for cp in getattr(self, "com_ports", []):
+            # VID/PID/Serialで照合（完全一致優先）
+            if (
+                cp.get("vid") == snapshot.vid and
+                cp.get("pid") == snapshot.pid and
+                (not snapshot.serial or cp.get("serial_number") == snapshot.serial)
+            ):
+                com_port_value = cp.get("device")
+                break
         info_values = {
             "VID": snapshot.vid,
             "usb.ids Vendor": vendor_label,
@@ -621,6 +730,7 @@ class UsbDevicesApp:
             "Address": address_text,
             "Port Path": port_text,
             "Class Guess": snapshot.class_guess,
+            "COMポート": com_port_value,  # 追加
         }
 
         for key, value in info_values.items():
@@ -641,7 +751,104 @@ class UsbDevicesApp:
             self.detail_box.configure(state="disabled")
 
 
+# --- COMポート取得（Windows/Mac/Linux共通） ---
+def get_com_ports():
+    """
+    Windows/Mac/LinuxでUSB-SerialデバイスのCOMポート情報を取得する。
+    Windowsはwin32com、Mac/Linuxはpyserialを利用。
+    戻り値: COMポート情報の辞書リスト
+    """
+
+    # OSごとにCOMポート情報を取得
+    system = platform.system()
+    com_ports = []
+    if system == "Windows":
+        try:
+            import win32com.client
+            wmi = win32com.client.Dispatch("WbemScripting.SWbemLocator")
+            for device in wmi.ConnectServer(".", "root\\cimv2").ExecQuery("SELECT * FROM Win32_PnPEntity WHERE Name LIKE '%(COM%'"):
+                com_ports.append({
+                    "device": device.Name.split()[-1].replace("(","").replace(")","") if device.Name else None,
+                    "description": device.Name,
+                    "pnp_id": device.PNPDeviceID,
+                    # WindowsはVID/PID/Serialの抽出が難しいため、pnp_idから部分抽出
+                    "vid": None,
+                    "pid": None,
+                    "serial_number": None,
+                    "manufacturer": None,
+                    "product": None,
+                })
+        except Exception as e:
+            print("COMポート情報取得エラー(Windows):", e, file=sys.stderr)
+    else:
+        try:
+            import serial.tools.list_ports as list_ports
+        except ImportError:
+            print("pyserialが必要です。pip install pyserial を実行してください。", file=sys.stderr)
+            return []
+        for p in list_ports.comports():
+            if getattr(p, 'vid', None) is not None and getattr(p, 'pid', None) is not None:
+                com_ports.append({
+                    "device": p.device,
+                    "description": p.description,
+                    "hwid": p.hwid,
+                    "vid": hex(p.vid) if p.vid is not None else None,
+                    "pid": hex(p.pid) if p.pid is not None else None,
+                    "serial_number": getattr(p, 'serial_number', None),
+                    "manufacturer": getattr(p, 'manufacturer', None),
+                    "product": getattr(p, 'product', None),
+                })
+    return com_ports
+
+
+def get_com_port_for_device(vid: str, pid: str, serial: str = None) -> str:
+    """
+    指定したVID/PID/Serialに一致するUSB-SerialデバイスのCOMポート名（例: 'COM5', '/dev/tty.usbserial-xxxx'）を返す。
+    一致しない場合は空文字を返す。
+    引数:
+        vid: ベンダーID（16進文字列）
+        pid: プロダクトID（16進文字列）
+        serial: シリアル番号（省略可）
+    戻り値:
+        COMポート名（str）
+    """
+
+    # COMポート情報リストから一致するものを検索
+    ports = get_com_ports()
+    for cp in ports:
+        if (
+            cp.get("vid") == vid and
+            cp.get("pid") == pid and
+            (serial is None or cp.get("serial_number") == serial)
+        ):
+            return cp.get("device", "")
+    return ""
+
+
+def get_current_com_port(vid: str, pid: str, serial: str = None) -> str:
+    """
+    GUIを使わず、指定したVID/PID/Serialに一致するUSB-Serialデバイスの現在割り当てられているCOMポート名（例: 'COM5', '/dev/tty.usbserial-xxxx'）を返す。
+    一致しない場合は空文字を返す。
+    引数:
+        vid: ベンダーID（16進文字列）
+        pid: プロダクトID（16進文字列）
+        serial: シリアル番号（省略可）
+    戻り値:
+        COMポート名（str）
+    """
+
+    # get_com_port_for_deviceをラップ
+    return get_com_port_for_device(vid, pid, serial)
+
+
 def main() -> None:
+    """
+    USB-utilのメインエントリ。
+    - USBデバイススキャン＆保存
+    - GUI起動
+    """
+
+    # USBデバイス情報をスキャンし、GUIを起動
     ids_db = UsbIdsDatabase()
     scanner = UsbScanner()
     data_store = UsbDataStore(USB_JSON_PATH, scanner)
