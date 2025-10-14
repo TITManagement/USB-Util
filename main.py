@@ -29,12 +29,152 @@ from dataclasses import dataclass, field
 from ctypes.util import find_library
 from typing import Any, Dict, List, Optional, Tuple
 import platform
-
-import customtkinter as ctk
-
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 USB_JSON_PATH = os.path.join(BASE_DIR, "usb_devices.json")
+import json
+import os
+import sys
+from dataclasses import dataclass, field
+import customtkinter as ctk
+from typing import Any, Dict, List, Optional, Tuple
+import platform
 
+
+class ComPortManager:
+    """
+    COMポート関連の管理クラス。
+    - get_com_ports(): COMポート情報一覧取得
+    - get_com_port_for_device(): VID/PID/SerialでCOMポート名取得
+    - get_current_com_port(): CLI用ラッパー
+    """
+
+    @staticmethod
+    def get_com_ports():
+        """
+        Windows/Mac/LinuxでUSB-SerialデバイスのCOMポート情報を取得する。
+        Windowsはwin32com、Mac/Linuxはpyserialを利用。
+        戻り値: COMポート情報の辞書リスト
+        """
+        system = platform.system()
+        com_ports = []
+        if system == "Windows":
+            try:
+                import win32com.client
+                wmi = win32com.client.Dispatch("WbemScripting.SWbemLocator")
+                for device in wmi.ConnectServer(".", "root\\cimv2").ExecQuery("SELECT * FROM Win32_PnPEntity WHERE Name LIKE '%(COM%'"):
+                    com_ports.append({
+                        "device": device.Name.split()[-1].replace("(","").replace(")","") if device.Name else None,
+                        "description": device.Name,
+                        "pnp_id": device.PNPDeviceID,
+                        "vid": None,
+                        "pid": None,
+                        "serial_number": None,
+                        "manufacturer": None,
+                        "product": None,
+                    })
+            except Exception as e:
+                print("COMポート情報取得エラー(Windows):", e, file=sys.stderr)
+        else:
+            try:
+                import serial.tools.list_ports as list_ports
+            except ImportError:
+                print("pyserialが必要です。pip install pyserial を実行してください。", file=sys.stderr)
+                return []
+            for p in list_ports.comports():
+                if getattr(p, 'vid', None) is not None and getattr(p, 'pid', None) is not None:
+                    com_ports.append({
+                        "device": p.device,
+                        "description": p.description,
+                        "hwid": p.hwid,
+                        "vid": hex(p.vid) if p.vid is not None else None,
+                        "pid": hex(p.pid) if p.pid is not None else None,
+                        "serial_number": getattr(p, 'serial_number', None),
+                        "manufacturer": getattr(p, 'manufacturer', None),
+                        "product": getattr(p, 'product', None),
+                    })
+        return com_ports
+
+    @staticmethod
+    def filter_ports(ports, vid=None, pid=None, serial=None):
+        """
+        COMポート情報リストからVID/PID/Serialでフィルタリング
+        """
+        result = []
+        for cp in ports:
+            if vid and cp.get("vid") != vid:
+                continue
+            if pid and cp.get("pid") != pid:
+                continue
+            if serial and cp.get("serial_number") != serial:
+                continue
+            result.append(cp)
+        return result
+
+    @staticmethod
+    def get_os():
+        """
+        現在のOS名を返す（Windows/Mac/Linux）
+        """
+        return platform.system()
+
+    @staticmethod
+    def format_port_name(port_name):
+        """
+        OSごとにCOMポート名のフォーマットを標準化
+        """
+        if not port_name:
+            return ""
+        system = platform.system()
+        if system == "Windows":
+            return port_name.upper()
+        return port_name
+
+    @staticmethod
+    def is_port_connected(port_name):
+        """
+        指定したCOMポート名が現在接続されているか判定
+        """
+        ports = ComPortManager.get_com_ports()
+        for cp in ports:
+            if cp.get("device") == port_name:
+                return True
+        return False
+
+    # キャッシュ機能（簡易）
+    _ports_cache = None
+
+    @classmethod
+    def get_com_ports_cached(cls, force_refresh=False):
+        """
+        COMポート情報をキャッシュして返す。force_refresh=Trueで再取得。
+        """
+        if force_refresh or cls._ports_cache is None:
+            cls._ports_cache = cls.get_com_ports()
+        return cls._ports_cache
+
+    @staticmethod
+    def get_com_port_for_device(vid: str, pid: str, serial: str = None) -> str:
+        """
+        指定したVID/PID/Serialに一致するUSB-SerialデバイスのCOMポート名（例: 'COM5', '/dev/tty.usbserial-xxxx'）を返す。
+        一致しない場合は空文字を返す。
+        """
+        ports = ComPortManager.get_com_ports()
+        for cp in ports:
+            if (
+                cp.get("vid") == vid and
+                cp.get("pid") == pid and
+                (serial is None or cp.get("serial_number") == serial)
+            ):
+                return cp.get("device", "")
+        return ""
+
+    @staticmethod
+    def get_current_com_port(vid: str, pid: str, serial: str = None) -> str:
+        """
+        GUIを使わず、指定したVID/PID/Serialに一致するUSB-Serialデバイスの現在割り当てられているCOMポート名（例: 'COM5', '/dev/tty.usbserial-xxxx'）を返す。
+        一致しない場合は空文字を返す。
+        """
+        return ComPortManager.get_com_port_for_device(vid, pid, serial)
 
 def find_usb_ids_path() -> str:
     """Return the first existing usb.ids path across supported platforms."""
@@ -44,15 +184,13 @@ def find_usb_ids_path() -> str:
         candidates.append(env_path)
     candidates.append(os.path.join(BASE_DIR, "usb.ids"))
     candidates.append(os.path.join(os.getcwd(), "usb.ids"))
-    candidates.extend(
-        [
-            "/usr/share/hwdata/usb.ids",
-            "/usr/share/misc/usb.ids",
-            "/var/lib/usbutils/usb.ids",
-            "/opt/homebrew/share/hwdata/usb.ids",
-            "/opt/local/share/hwdata/usb.ids",
-        ]
-    )
+    candidates.extend([
+        "/usr/share/hwdata/usb.ids",
+        "/usr/share/misc/usb.ids",
+        "/var/lib/usbutils/usb.ids",
+        "/opt/homebrew/share/hwdata/usb.ids",
+        "/opt/local/share/hwdata/usb.ids",
+    ])
     if sys.platform.startswith("win"):
         program_data = os.environ.get("ProgramData")
         if program_data:
@@ -261,19 +399,18 @@ class UsbScanner:
             from usb.core import NoBackendError, USBError
         except ImportError:
             message = "PyUSBが見つかりません。pip install pyusb でインストールしてください。"
+            devices_iter = None
             return [self._error_snapshot(message)], message
 
-        backend = self._resolve_backend()
-        find_kwargs: Dict[str, Any] = {"find_all": True}
-        if backend is not None:
-            find_kwargs["backend"] = backend
-
+        devices_iter = None
         try:
-            devices_iter = usb.core.find(**find_kwargs)
+            devices_iter = usb.core.find(find_all=True)
         except NoBackendError:
+            devices_iter = None
             message = self._no_backend_message()
             return [self._error_snapshot(message)], message
         except USBError as exc:
+            devices_iter = None
             message = f"USBデバイスへのアクセスに失敗しました: {exc}"
             return [self._error_snapshot(message)], message
 
@@ -540,14 +677,14 @@ class UsbDevicesApp:
         # USBデバイス情報・idsデータベースを受け取り、GUIを構築
         self.snapshots = self._sort_snapshots(snapshots)
         self.ids_db = ids_db
-        self.com_ports = get_com_ports()  # COMポート情報取得
+        self.com_ports = ComPortManager.get_com_ports()  # COMポート情報取得
         self.app = ctk.CTk()
         self.app.title("USB Devices Viewer")
         self.app.geometry("900x600")
-        self.info_labels: Dict[str, ctk.CTkLabel] = {}
-        self.error_label: Optional[ctk.CTkLabel] = None
-        self.detail_box: Optional[ctk.CTkTextbox] = None
-        self.combo: Optional[ctk.CTkComboBox] = None
+        self.info_labels = {}
+        self.error_label = None
+        self.detail_box = None
+        self.combo = None
         self._build_layout()
 
     def run(self) -> None:
@@ -589,7 +726,7 @@ class UsbDevicesApp:
         self.device_list_items = []
         for idx, snap in enumerate(self.snapshots):
             vendor_label, product_label = snap.resolve_names(self.ids_db)
-            com_port_value = "―"
+            com_port_value = "情報なし"
             for cp in getattr(self, "com_ports", []):
                 if (
                     cp.get("vid") == snap.vid and
@@ -712,7 +849,7 @@ class UsbDevicesApp:
         bus_text = str(snapshot.bus) if snapshot.bus is not None else "不明"
         address_text = str(snapshot.address) if snapshot.address is not None else "不明"
         # COMポート照合
-        com_port_value = "―"
+        com_port_value = "情報なし"
         for cp in getattr(self, "com_ports", []):
             # VID/PID/Serialで照合（完全一致優先）
             if (
@@ -755,94 +892,6 @@ class UsbDevicesApp:
             self.detail_box.configure(state="disabled")
 
 
-# --- COMポート取得（Windows/Mac/Linux共通） ---
-def get_com_ports():
-    """
-    Windows/Mac/LinuxでUSB-SerialデバイスのCOMポート情報を取得する。
-    Windowsはwin32com、Mac/Linuxはpyserialを利用。
-    戻り値: COMポート情報の辞書リスト
-    """
-
-    # OSごとにCOMポート情報を取得
-    system = platform.system()
-    com_ports = []
-    if system == "Windows":
-        try:
-            import win32com.client
-            wmi = win32com.client.Dispatch("WbemScripting.SWbemLocator")
-            for device in wmi.ConnectServer(".", "root\\cimv2").ExecQuery("SELECT * FROM Win32_PnPEntity WHERE Name LIKE '%(COM%'"):
-                com_ports.append({
-                    "device": device.Name.split()[-1].replace("(","").replace(")","") if device.Name else None,
-                    "description": device.Name,
-                    "pnp_id": device.PNPDeviceID,
-                    # WindowsはVID/PID/Serialの抽出が難しいため、pnp_idから部分抽出
-                    "vid": None,
-                    "pid": None,
-                    "serial_number": None,
-                    "manufacturer": None,
-                    "product": None,
-                })
-        except Exception as e:
-            print("COMポート情報取得エラー(Windows):", e, file=sys.stderr)
-    else:
-        try:
-            import serial.tools.list_ports as list_ports
-        except ImportError:
-            print("pyserialが必要です。pip install pyserial を実行してください。", file=sys.stderr)
-            return []
-        for p in list_ports.comports():
-            if getattr(p, 'vid', None) is not None and getattr(p, 'pid', None) is not None:
-                com_ports.append({
-                    "device": p.device,
-                    "description": p.description,
-                    "hwid": p.hwid,
-                    "vid": hex(p.vid) if p.vid is not None else None,
-                    "pid": hex(p.pid) if p.pid is not None else None,
-                    "serial_number": getattr(p, 'serial_number', None),
-                    "manufacturer": getattr(p, 'manufacturer', None),
-                    "product": getattr(p, 'product', None),
-                })
-    return com_ports
-
-
-def get_com_port_for_device(vid: str, pid: str, serial: str = None) -> str:
-    """
-    指定したVID/PID/Serialに一致するUSB-SerialデバイスのCOMポート名（例: 'COM5', '/dev/tty.usbserial-xxxx'）を返す。
-    一致しない場合は空文字を返す。
-    引数:
-        vid: ベンダーID（16進文字列）
-        pid: プロダクトID（16進文字列）
-        serial: シリアル番号（省略可）
-    戻り値:
-        COMポート名（str）
-    """
-
-    # COMポート情報リストから一致するものを検索
-    ports = get_com_ports()
-    for cp in ports:
-        if (
-            cp.get("vid") == vid and
-            cp.get("pid") == pid and
-            (serial is None or cp.get("serial_number") == serial)
-        ):
-            return cp.get("device", "")
-    return ""
-
-
-def get_current_com_port(vid: str, pid: str, serial: str = None) -> str:
-    """
-    GUIを使わず、指定したVID/PID/Serialに一致するUSB-Serialデバイスの現在割り当てられているCOMポート名（例: 'COM5', '/dev/tty.usbserial-xxxx'）を返す。
-    一致しない場合は空文字を返す。
-    引数:
-        vid: ベンダーID（16進文字列）
-        pid: プロダクトID（16進文字列）
-        serial: シリアル番号（省略可）
-    戻り値:
-        COMポート名（str）
-    """
-
-    # get_com_port_for_deviceをラップ
-    return get_com_port_for_device(vid, pid, serial)
 
 
 def main() -> None:
