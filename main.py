@@ -598,6 +598,7 @@ class UsbDevicesApp:
                 ):
                     com_port_value = cp.get("device")
                     break
+            # 元の色（デフォルト）でCOMポート表示
             item_text = f"{product_label or snap.product or '―'} / {snap.manufacturer or '―'}\nVID:PID {snap.vid}:{snap.pid}\nSerial: {snap.serial or '―'}\nCOM: {com_port_value}\nClass: {snap.class_guess}"
             item_btn = ctk.CTkButton(self.device_listbox, text=item_text, width=240, height=60, command=lambda i=idx: self._on_device_list_select(i))
             item_btn.pack(fill="x", padx=4, pady=4)
@@ -634,7 +635,10 @@ class UsbDevicesApp:
             "COMポート",
         ]
         for row, label in enumerate(fields):
-            key_label = ctk.CTkLabel(info_frame, text=f"{label}:", font=("Meiryo", 12, "bold"))
+            if label == "COMポート":
+                key_label = ctk.CTkLabel(info_frame, text=f"{label}:", font=("Meiryo", 12, "bold"), text_color="red")
+            else:
+                key_label = ctk.CTkLabel(info_frame, text=f"{label}:", font=("Meiryo", 12, "bold"))
             key_label.grid(row=row, column=0, sticky="w", padx=(10, 6), pady=4)
             value_label = ctk.CTkLabel(info_frame, text="―", font=("Meiryo", 12))
             value_label.grid(row=row, column=1, sticky="w", padx=(0, 10), pady=4)
