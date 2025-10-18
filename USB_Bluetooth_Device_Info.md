@@ -53,7 +53,7 @@ Bluetoothデバイスは、今後の拡張で`pybluez`や`bleak`などのライ�
 - Python 3.9 以降
 - PyUSB (`pip install pyusb`)
 - CustomTkinter (`pip install customtkinter`)
-- OSごとのlibusbバックエンド（macOS: `brew install libusb`、Ubuntu: `sudo apt install libusb-1.0-0`、Windows: ZadigでWinUSB/libusbK導入）
+- OSごとのlibusbバックエンド（macOS: `brew install libusb`、Ubuntu: `sudo apt install libusb-1.0-0`）
 - Bluetooth対応時は `pybluez` や `bleak` などのライブラリが必要
 
 ---
