@@ -126,6 +126,19 @@ class UsbIdsDatabase:
     - lookup(vid, pid): ベンダー名・製品名取得
     """
 
+    """
+    ・core/に移すメリット
+        サービス層や他モジュールから独立して再利用しやすくなる
+        main.py がエントリーポイントやUIロジック中心になり、責務がより整理される
+        将来的に CLI/サービス側からも共通利用したい場合に import 関係がわかりやすい
+    ・core/に移すデメリット
+        現状 UsbIdsDatabase は GUI/CLI のみが直接利用しており、 
+        core のサービス層やスキャナ層からは参照していないcore 側に移すと、
+        core 内で usb.ids ファイル探索パスをどう扱うか
+        （現状は BASE_DIR を main.py で管理）整理が必要
+        モジュール依存の整理次第では循環参照が生じる可能性がある（UsbDeviceSnapshot.resolve_names が UsbIdsDatabase を参照し、main.py 側から import しているため）
+    """
+
     # usb.idsのパスを受け取り、ベンダー/プロダクト名の辞書を構築
     def __init__(self, ids_path: Optional[str] = None) -> None:
         """usb.idsのパスを保持し、後続処理のためのキャッシュ領域を初期化する。"""
