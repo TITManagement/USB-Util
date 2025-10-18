@@ -8,7 +8,7 @@ PowerShell 不使用。WMI + pyserial だけで
 を行い、「どのハブの何番ポートか」をできるだけ具体的に出力する。
 
 依存: pip install pyserial wmi
-実行: python com_usb_topology_wmi.py
+実行 (Windowsのみ): python com_usb_topology_wmi.py
 """
 
 import re
@@ -18,7 +18,11 @@ import platform
 from collections import defaultdict
 
 import serial.tools.list_ports as list_ports
-import wmi  # pure-Python WMI
+
+try:
+    import wmi  # type: ignore  # pure-Python WMI (Windows only)
+except ImportError:  # pragma: no cover - only triggered on non-Windows envs
+    wmi = None
 
 # ---- utils ------------------------------------------------------------------
 
@@ -129,7 +133,11 @@ def build_controller_names(w):
 
 def correlate_with_topology():
     if platform.system().lower() != "windows":
-        print("Windows専用（WMI使用）")
+        print("Windows専用（WMI使用）。このスクリプトはWindows環境でのみ実行してください。")
+        sys.exit(1)
+
+    if wmi is None:
+        print("Windows専用の wmi ライブラリが見つかりません。`pip install wmi` を実行してください。")
         sys.exit(1)
 
     w = wmi.WMI()
