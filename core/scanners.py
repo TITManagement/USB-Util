@@ -1,18 +1,32 @@
-"""USB scanning utilities with platform-specific backends."""
+"""USB/BLEスキャンとWindowsトポロジー取得のユーティリティ。"""
 
 from __future__ import annotations
 
+import asyncio
+import os
 import platform
 import re
 import sys
 from ctypes.util import find_library
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, Iterable, List, Optional, Tuple
 
-from .models import UsbDeviceSnapshot
+from .device_models import UsbDeviceSnapshot
+
+AK_COMM_ROOT = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..", "..", "lab_automation_api", "libs", "ak_communication")
+)
+if AK_COMM_ROOT not in sys.path and os.path.isdir(AK_COMM_ROOT):
+    sys.path.insert(0, AK_COMM_ROOT)
+
+try:  # pragma: no cover - optional dependency
+    from ak_communication.ble_scanner import BleScanner, BleDevice  # type: ignore
+except Exception:  # pragma: no cover - optional dependency
+    BleScanner = None  # type: ignore
+    BleDevice = None  # type: ignore
 
 
 class UsbScanner:
-    """Encapsulate platform-specific USB scanning with graceful fallbacks."""
+    """プラットフォーム別のUSBスキャンを、フォールバック付きで提供する。"""
 
     def scan(self) -> Tuple[List[UsbDeviceSnapshot], Optional[str]]:
         system = platform.system().lower()
@@ -397,3 +411,211 @@ class UsbScanner:
         if value is None:
             return ""
         return str(value).strip()
+
+
+class DeviceScanner:
+    """USB/BLEデバイスをスキャンし、統合スナップショット一覧を返す。"""
+
+    def __init__(self, *, ble_timeout: float = 10.0, adapter: Optional[str] = None) -> None:
+        self._usb = UsbScanner()
+        self._ble_timeout = ble_timeout
+        self._ble = BleScanner(adapter=adapter) if BleScanner else None
+
+    def scan(self) -> Tuple[List[UsbDeviceSnapshot], Optional[str]]:
+        usb_snapshots, usb_error = self._usb.scan()
+        ble_snapshots, ble_error = self._scan_ble()
+        snapshots = usb_snapshots + ble_snapshots
+        return snapshots, self._combine_errors(usb_error, ble_error)
+
+    def is_usb_device_connected(
+        self, vid: str, pid: str, serial: Optional[str] = None
+    ) -> bool:
+        return self._usb.is_usb_device_connected(vid, pid, serial)
+
+    def _scan_ble(self) -> Tuple[List[UsbDeviceSnapshot], Optional[str]]:
+        if self._ble is None:
+            return [], "BLEスキャンには ak_communication の ble_scanner.py が必要です。"
+        try:
+            devices = asyncio.run(self._ble.scan(timeout=self._ble_timeout))
+        except Exception as exc:
+            return [], f"BLEスキャンに失敗しました: {exc}"
+
+        snapshots = [self._ble_snapshot(device) for device in devices]
+        return snapshots, None
+
+    @staticmethod
+    def _ble_snapshot(device: "BleDevice") -> UsbDeviceSnapshot:
+        return UsbDeviceSnapshot(
+            vid="-",
+            pid="-",
+            device_type="ble",
+            manufacturer="",
+            product="",
+            serial="",
+            bus=None,
+            address=None,
+            port_path=[],
+            device_descriptor={},
+            configurations=[],
+            class_guess="BLE",
+            error=None,
+            topology_chain=[],
+            location_information="",
+            location_fallback="",
+            usb_controllers=[],
+            ble_address=getattr(device, "address", "") or "",
+            ble_name=getattr(device, "name", "") or "",
+            ble_rssi=getattr(device, "rssi", None),
+            ble_uuids=list(getattr(device, "uuids", []) or []),
+        )
+
+    @staticmethod
+    def _combine_errors(usb_error: Optional[str], ble_error: Optional[str]) -> Optional[str]:
+        if usb_error and ble_error:
+            return f"USB: {usb_error} / BLE: {ble_error}"
+        return usb_error or ble_error
+
+
+PORT_TOKEN_RE = re.compile(r"(Port_#\d+|Hub_#\d+)", re.IGNORECASE)
+
+
+def annotate_windows_topology(snapshots: Iterable[UsbDeviceSnapshot]) -> None:
+    """WindowsでUSBトポロジー情報を付与する。"""
+    if not snapshots:
+        return
+    if platform.system().lower() != "windows":
+        return
+    try:
+        import wmi  # type: ignore
+    except ImportError:
+        return
+
+    resolver = _TopologyResolver(wmi.WMI())
+    mapping = resolver.build_mapping()
+    if not mapping:
+        return
+
+    for snapshot in snapshots:
+        key_with_serial = _topology_snapshot_key(snapshot, include_serial=True)
+        key_without_serial = _topology_snapshot_key(snapshot, include_serial=False)
+        entry = mapping.get(key_with_serial) or mapping.get(key_without_serial)
+        if not entry:
+            continue
+        snapshot.topology_chain = entry.get("port_hub_chain", [])
+        snapshot.location_information = entry.get("location_information", "")
+        snapshot.location_fallback = entry.get("location_fallback", "")
+        snapshot.usb_controllers = entry.get("usb_controllers", [])
+
+
+class _TopologyResolver:
+    def __init__(self, wmi_client: "wmi.WMI") -> None:  # type: ignore
+        self._wmi = wmi_client
+
+    def build_mapping(self) -> Dict[Tuple[str, str, str], Dict[str, List[str]]]:
+        dep_to_ctrl = self._map_entity_to_controller()
+        ctrl_names = self._controller_names()
+        mapping: Dict[Tuple[str, str, str], Dict[str, List[str]]] = {}
+
+        for dev in self._wmi.Win32_PnPEntity():
+            device_id = _topology_norm(getattr(dev, "DeviceID", ""))
+            if not device_id.startswith("USB\\"):
+                continue
+            vid, pid = _topology_parse_vid_pid(device_id)
+            if not vid or not pid:
+                continue
+            serial = _topology_parse_serial_from_pnpid(device_id)
+            location_info = _topology_norm(getattr(dev, "LocationInformation", ""))
+            chain = _topology_parse_location_chain(location_info)
+            controllers = [
+                ctrl_names.get(ctrl_id, ctrl_id)
+                for ctrl_id in dep_to_ctrl.get(device_id, [])
+            ]
+
+            entry = {
+                "pnp_device_id": device_id,
+                "location_information": location_info,
+                "location_fallback": "",
+                "port_hub_chain": chain,
+                "usb_controllers": controllers,
+            }
+
+            key_with_serial = (vid, pid, serial)
+            key_without_serial = (vid, pid, "")
+            mapping[key_with_serial] = entry
+            mapping.setdefault(key_without_serial, entry)
+
+        return mapping
+
+    def _map_entity_to_controller(self) -> Dict[str, List[str]]:
+        dep_to_ctrl: Dict[str, List[str]] = {}
+
+        def extract_deviceid(relpath: Optional[str]) -> Optional[str]:
+            if not relpath:
+                return None
+            match = re.search(r'DeviceID="([^\"]+)"', relpath)
+            return match.group(1) if match else None
+
+        for rel in self._wmi.Win32_USBControllerDevice():
+            dep_path = getattr(rel, "Dependent", None)
+            ant_path = getattr(rel, "Antecedent", None)
+            dep_id = extract_deviceid(dep_path)
+            ant_id = extract_deviceid(ant_path)
+            if dep_id and ant_id:
+                dep_to_ctrl.setdefault(dep_id, []).append(ant_id)
+
+        return dep_to_ctrl
+
+    def _controller_names(self) -> Dict[str, str]:
+        names: Dict[str, str] = {}
+        for ctrl in self._wmi.Win32_USBController():
+            device_id = _topology_norm(getattr(ctrl, "DeviceID", ""))
+            if device_id:
+                names[device_id] = _topology_norm(getattr(ctrl, "Name", "")) or device_id
+        return names
+
+
+def _topology_snapshot_key(snapshot: UsbDeviceSnapshot, *, include_serial: bool) -> Tuple[str, str, str]:
+    vid = _topology_normalize_vid_pid(snapshot.vid)
+    pid = _topology_normalize_vid_pid(snapshot.pid)
+    serial = _topology_normalize_serial(snapshot.serial) if include_serial else ""
+    return vid, pid, serial
+
+
+def _topology_parse_location_chain(location_info: str) -> List[str]:
+    if not location_info:
+        return []
+    return [token for token in PORT_TOKEN_RE.findall(location_info)]
+
+
+def _topology_parse_vid_pid(pnp_device_id: str) -> Tuple[str, str]:
+    match = re.search(r"VID_([0-9A-Fa-f]{4}).*PID_([0-9A-Fa-f]{4})", pnp_device_id or "")
+    if match:
+        return match.group(1).upper(), match.group(2).upper()
+    return "", ""
+
+
+def _topology_parse_serial_from_pnpid(pnp_device_id: str) -> str:
+    if not pnp_device_id:
+        return ""
+    parts = re.split(r"[\\#]", pnp_device_id)
+    return parts[-1].upper() if parts else ""
+
+
+def _topology_normalize_vid_pid(value: Any) -> str:
+    if value is None:
+        return ""
+    text = str(value).strip().upper()
+    if text.startswith("0X"):
+        text = text[2:]
+    return text.zfill(4)
+
+
+def _topology_normalize_serial(value: Any) -> str:
+    text = (str(value).strip() if value is not None else "").upper()
+    if not text or text in {"取得不可", "-", ""}:
+        return ""
+    return text
+
+
+def _topology_norm(value: Optional[str]) -> str:
+    return (value or "").strip()

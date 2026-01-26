@@ -62,10 +62,10 @@ Bluetoothデバイスは、今後の拡張で`pybluez`や`bleak`などのライ�
 
 1. 必要なライブラリ・バックエンドをインストールします。
 2. `usb.ids`ファイルをプロジェクトルートまたは環境変数 `USB_IDS_PATH` で指定します。
-3. Python仮想環境を有効化し、`main.py` を実行します。
+3. Python仮想環境を有効化し、`usb_util_gui.py` を実行します。
 
 ```zsh
-python main.py
+python usb_util_gui.py
 ```
 
 4. GUIが起動し、USBデバイス一覧・詳細情報が表示されます。  

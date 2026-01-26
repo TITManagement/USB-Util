@@ -58,9 +58,9 @@ pyserial   # COMポート列挙/シリアル通信を行う場合
    代表的な設置場所（Linux, macOS）は `/usr/share/hwdata/usb.ids` 等です。
 
 ## 使い方
-1. Python環境をアクティブにした状態で `main.py` を実行します。
+1. Python環境をアクティブにした状態で `usb_util_gui.py` を実行します。
    ```zsh
-   python main.py
+   python usb_util_gui.py
    ```
 2. 初回起動時にUSBデバイスをスキャンし、結果を `usb_devices.json` に保存します。
 3. GUI上部のコンボボックスからデバイス（`VID:PID`形式）を切り替えると、左側に主要情報、右側に詳細JSONが表示されます（ViewModelが選択状態と表示内容を管理します）。
@@ -94,7 +94,7 @@ if com_port:
 ```
 
 ### 外部モジュールからの利用例
-プロジェクトとは別のスクリプトから直接COMポートを解決したい場合は、`main.py` が提供するヘルパー関数をインポートして使用できます。
+プロジェクトとは別のスクリプトから直接COMポートを解決したい場合は、`usb_util_gui.py` が提供するヘルパー関数をインポートして使用できます。
 
 ```python
 # other_module.py からの利用サンプル
@@ -127,10 +127,10 @@ else:
 USBデバイスのVID/PID/Serialから、現在割り当てられているCOMポート番号をコマンドラインで取得できます。
 
 ### 使い方
-`main.py` を以下のように実行します：
+`usb_util_gui.py` を以下のように実行します：
 
 ```zsh
-python main.py <vid> <pid> [serial]
+python usb_util_gui.py <vid> <pid> [serial]
 ```
 - `<vid>`: ベンダーID（例: 0x1234）
 - `<pid>`: プロダクトID（例: 0x5678）
@@ -139,21 +139,21 @@ python main.py <vid> <pid> [serial]
 
 #### 実行例
 ```zsh
-python main.py 0x1234 0x5678 ABCDEF123
+python usb_util_gui.py 0x1234 0x5678 ABCDEF123
 ```
 → 該当するCOMポート名（例: COM5, /dev/tty.usbserial-xxxx）が標準出力に表示されます。
 VID/PIDに対するベンダー名・製品名（usb.ids由来）と、実機から取得した生のManufacturer/Product文字列も併記されるため、入力値の検証が容易です。識別タグ・ポートパス・バス/アドレスも併せて出力されるため、同一機種が複数ある場合でも個体を特定できます。
 
 シリアル番号は省略可能です。
 
-> GUIを起動したい場合は引数なしで `python main.py` を実行してください。
+> GUIを起動したい場合は引数なしで `python usb_util_gui.py` を実行してください。
 
 #### 代表的な実行例（`usb_devices.json` に基づく実サンプル）
 ```zsh
-python main.py 0x25a4 0x9311
-python main.py 0x25a4 0x9311 --send "STATUS" --append-newline --read-until OK --baudrate 115200
-python main.py 0x03e7 0x2485 03e72485 --refresh
-python main.py --self-test
+python usb_util_gui.py 0x25a4 0x9311
+python usb_util_gui.py 0x25a4 0x9311 --send "STATUS" --append-newline --read-until OK --baudrate 115200
+python usb_util_gui.py 0x03e7 0x2485 03e72485 --refresh
+python usb_util_gui.py --self-test
 ```
 
 ### 自己診断コマンド
@@ -161,7 +161,7 @@ python main.py --self-test
 環境セットアップが正しく行われているか確認したいときは、以下のコマンドで自己診断を実行できます。
 
 ```zsh
-python main.py --self-test
+python usb_util_gui.py --self-test
 ```
 
 - 現在保存されているUSBスナップショット（最大5件）と、pyserialが検出したCOMポートを一覧表示します。
@@ -180,7 +180,7 @@ core/
  └─ topology_wmi.py     # Windows用Hub/Port/Controller解析
 ui/
  └─ view_model.py       # UsbDevicesViewModel（GUIの状態管理）
-main.py                 # TkベースのView（UsbDevicesApp）とアプリ起動エントリ
+usb_util_gui.py         # TkベースのView（UsbDevicesApp）とアプリ起動エントリ
 ```
 
 - **サービス層 (`core/service.py`)**  
@@ -195,7 +195,7 @@ main.py                 # TkベースのView（UsbDevicesApp）とアプリ起�
 - **ViewModel (`ui/view_model.py`)**  
   `UsbDevicesViewModel` がスナップショットの並び替え、選択状態、派生情報（COMポート・表示用テキスト）を管理し、View から呼び出し可能なメソッドを提供します。
 
-- **View (`main.py`)**  
+- **View (`usb_util_gui.py`)**  
   `UsbDevicesApp` はCustomTkinterでUI要素を構築し、ViewModelが提供する値に従って描画・再描画します。イベントハンドラはViewModelへの委譲を行うだけに簡素化されています。
 
 この構成により、ビジネスロジック（スキャン／永続化／状態管理）と表示ロジックを明確に分離し、テストや機能拡張を容易にしています。
@@ -209,7 +209,7 @@ main.py                 # TkベースのView（UsbDevicesApp）とアプリ起�
 
 ## 開発メモ
 - 収集したUSBスナップショットは `usb_devices.json` に配列形式で保存されます。内容を直接編集するとGUIにも反映されます。
-- スキャン・永続化ロジックは `core/` 配下、GUIはViewModel＋Viewに二分されています。エントリポイントは `main.py` の `main()` です。
+- スキャン・永続化ロジックは `core/` 配下、GUIはViewModel＋Viewに二分されています。エントリポイントは `usb_util_gui.py` の `main()` です。
 - ViewModelはテストしやすいようにPure Pythonで実装されています。UIの結合テストを行う場合もViewModelをモック化することで効率的に検証できます。
 
 ## ライセンス

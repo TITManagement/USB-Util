@@ -1,9 +1,7 @@
-"""Core domain package for USB-util."""
+"""USB/BTユーティリティのコアパッケージ。"""
 
 __all__ = [
     "com_ports",
-    "models",
-    "repository",
-    "service",
-    "topology_wmi",
+    "device_models",
+    "scanners",
 ]

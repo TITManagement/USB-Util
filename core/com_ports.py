@@ -1,4 +1,4 @@
-"""Utilities for enumerating and filtering serial/COM ports."""
+"""シリアル/COMポートの列挙とフィルタ用ユーティリティ。"""
 
 from __future__ import annotations
 
@@ -8,13 +8,13 @@ from typing import Dict, List, Optional
 
 
 class ComPortManager:
-    """Cross-platform helper for USB serial/COM port inspection."""
+    """USBシリアル/COMポート調査のクロスプラットフォーム補助。"""
 
     _ports_cache: Optional[List[Dict[str, Optional[str]]]] = None
 
     @staticmethod
     def is_usb_device_connected(vid: str, pid: str, serial: Optional[str] = None) -> bool:
-        """Return True when a USB device with given identifiers is currently connected."""
+        """指定識別子のUSBデバイスが接続中ならTrueを返す。"""
 
         try:
             import usb.core  # type: ignore
@@ -57,7 +57,7 @@ class ComPortManager:
 
     @staticmethod
     def get_com_ports() -> List[Dict[str, Optional[str]]]:
-        """Enumerate serial ports across Windows/macOS/Linux."""
+        """Windows/macOS/Linuxのシリアルポートを列挙する。"""
 
         system = platform.system()
         com_ports: List[Dict[str, Optional[str]]] = []
@@ -109,7 +109,7 @@ class ComPortManager:
 
     @classmethod
     def get_com_ports_cached(cls, force_refresh: bool = False) -> List[Dict[str, Optional[str]]]:
-        """Return cached enumeration of serial ports."""
+        """キャッシュ済みのシリアルポート列挙結果を返す。"""
 
         if force_refresh or cls._ports_cache is None:
             cls._ports_cache = cls.get_com_ports()
@@ -122,7 +122,7 @@ class ComPortManager:
         pid: Optional[str] = None,
         serial: Optional[str] = None,
     ) -> List[Dict[str, Optional[str]]]:
-        """Filter port list by VID/PID/serial number."""
+        """VID/PID/シリアル番号でポート一覧を絞り込む。"""
 
         results: List[Dict[str, Optional[str]]] = []
         for port in ports:
@@ -137,7 +137,7 @@ class ComPortManager:
 
     @staticmethod
     def format_port_name(port_name: Optional[str]) -> str:
-        """Normalise COM port names by OS."""
+        """OSに合わせてCOMポート名を正規化する。"""
 
         if not port_name:
             return ""
@@ -147,7 +147,7 @@ class ComPortManager:
 
     @staticmethod
     def is_port_connected(port_name: Optional[str]) -> bool:
-        """Check if the target port is still present."""
+        """対象ポートが現在存在するか確認する。"""
 
         if not port_name:
             return False

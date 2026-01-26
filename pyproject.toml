@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "usb-util"
+version = "0.1.0"
+description = "USB utility helpers"
+requires-python = ">=3.8"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["core", "ui"]
+
+[tool.setuptools]
+py-modules = ["main", "com_usb_topology_wmi"]
