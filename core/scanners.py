@@ -13,7 +13,7 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple
 from .device_models import UsbDeviceSnapshot
 
 AK_COMM_ROOT = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), "..", "..", "lab_automation_api", "libs", "ak_communication")
+    os.path.join(os.path.dirname(__file__), "..", "..", "..", "lab_automation_api", "libs", "ak_communication")
 )
 if AK_COMM_ROOT not in sys.path and os.path.isdir(AK_COMM_ROOT):
     sys.path.insert(0, AK_COMM_ROOT)
