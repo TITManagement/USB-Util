@@ -1,0 +1,9 @@
+repos:
+  - repo: local
+    hooks:
+      - id: gen-notice
+        name: Generate OSS_LICENSES.md
+        entry: python ../../tools/gen_oss_licenses.py --root . --output OSS_LICENSES.md --pyproject pyproject.toml
+        language: system
+        pass_filenames: false
+        files: ^pyproject\.toml$
