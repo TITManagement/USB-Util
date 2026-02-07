@@ -1,5 +1,5 @@
 # Project: usb-util
-**NOTICE generated: 2026-02-07 17:41:15**
+**NOTICE generated: 2026-02-07 18:34:46**
 **Author:** Takaya Inoue
 **Copyright:** AUTO kobo
 
@@ -26,7 +26,7 @@
 | click                            | 8.1.8         | BSD License                                                    | UNKNOWN                          |                                  |
 | customtkinter                    | 5.2.2         | MIT License                                                    | Tom Schimansky                   |                                  |
 | darkdetect                       | 0.8.0         | BSD License                                                    | UNKNOWN                          |                                  |
-| dobot_controller_minimal         | 1.0.0         | MIT                                                            | Takaya Inoue                     | AUTO kobo                        |
+| dobot_controller_minimal         | 1.0.0         | MIT                                                            | UNKNOWN                          |                                  |
 | exceptiongroup                   | 1.3.1         | MIT License                                                    | UNKNOWN                          |                                  |
 | fastapi                          | 0.128.3       | MIT                                                            | UNKNOWN                          |                                  |
 | flask-material-manager           | 1.0.0         | UNKNOWN                                                        | TITManagement                    |                                  |
