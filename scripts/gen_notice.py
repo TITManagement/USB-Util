@@ -10,7 +10,7 @@ from pathlib import Path
 
 def main() -> int:
     root = Path(__file__).resolve().parent.parent
-    notice_path = root / "NOTICE.md"
+    notice_path = root / "OSS_LICENSES.md"
 
     if shutil.which("pip-licenses") is None:
         print(
@@ -40,9 +40,9 @@ def main() -> int:
 
         if new_text != old_text:
             notice_path.write_text(new_text, encoding="utf-8")
-            print("NOTICE.md を更新しました。")
+            print("OSS_LICENSES.md を更新しました。")
         else:
-            print("NOTICE.md は最新です。")
+            print("OSS_LICENSES.md は最新です。")
     finally:
         try:
             tmp_path.unlink(missing_ok=True)

@@ -12,15 +12,7 @@ COM Port Inspector (FULL) - PowerShell不要版 (Windows)
   python com_port_inspector_full.py
 """
 
-import re
-import json
-import platform
-from dataclasses import dataclass
-from typing import Optional, List, Dict, Tuple
-from collections import defaultdict
 
-import serial.tools.list_ports as list_ports
-import wmi
 
 
 # -------------------- utils --------------------

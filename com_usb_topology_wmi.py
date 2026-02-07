@@ -11,18 +11,7 @@ PowerShell 不使用。WMI + pyserial だけで
 実行 (Windowsのみ): python com_usb_topology_wmi.py
 """
 
-import re
-import json
-import sys
-import platform
-from collections import defaultdict
 
-import serial.tools.list_ports as list_ports
-
-try:
-    import wmi  # type: ignore  # pure-Python WMI (Windows only)
-except ImportError:  # pragma: no cover - only triggered on non-Windows envs
-    wmi = None
 
 # ---- utils ------------------------------------------------------------------
 

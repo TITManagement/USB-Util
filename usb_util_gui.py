@@ -1,3 +1,4 @@
+
 """
 USB-util: USB/BTデバイス情報のスキャン・表示・保存・COMポート逆引きを行うPython GUI/CLIツール
 
@@ -16,17 +17,17 @@ USB-util: USB/BTデバイス情報のスキャン・表示・保存・COMポー�
 # - JSON保存・読み込み
 # - CustomTkinter GUIで情報表示
 # - 権限不足/バックエンド未導入時のエラー表示
-#
-# クラス構成
-# - DeviceScanner: USB/BLEデバイスのスキャン
-# - UsbIdsDatabase: usb.idsパースと名称解決
-# - UsbDevicesApp: GUI表示
+
 import argparse
 import os
 import sys
+
 from typing import Any, Dict, List, Optional, Tuple
 
 import customtkinter as ctk
+
+import threading
+import time
 
 from core.com_ports import ComPortManager
 from core.device_models import UsbDeviceSnapshot, UsbSnapshotRepository, UsbSnapshotService
@@ -70,6 +71,45 @@ class UsbDevicesApp:
         self._ui_fonts = self._font_config()
 
         self._setup_layout()
+        self._show_scanning_indicator()
+        threading.Thread(target=self._background_initial_scan, daemon=True).start()
+
+    def _background_initial_scan(self):
+        self.view_model.refresh()
+        self.app.after(0, self._finish_scanning_indicator)
+
+    def _show_scanning_indicator(self):
+        if self.device_listbox:
+            for item in self.device_list_items:
+                item.destroy()
+            self.device_list_items.clear()
+            self._scanning_blink_state = True
+            self._scanning_label = ctk.CTkLabel(
+                self.device_listbox,
+                text="🔄 デバイス検索中... 🔄",
+                font=("Meiryo", 16, "bold"),
+                text_color="#FF8800"
+            )
+            self._scanning_label.pack(pady=30)
+            self.device_list_items.append(self._scanning_label)
+            self._blink_scanning_label()
+
+    def _blink_scanning_label(self):
+        # ブリンク（点滅）処理
+        if not hasattr(self, "_scanning_label") or self._scanning_label is None:
+            return
+        self._scanning_blink_state = not getattr(self, "_scanning_blink_state", False)
+        if self._scanning_blink_state:
+            self._scanning_label.configure(text="🔄 デバイス検索中... 🔄")
+        else:
+            self._scanning_label.configure(text="   デバイス検索中...   ")
+        self.app.after(600, self._blink_scanning_label)
+
+    def _finish_scanning_indicator(self):
+        # スキャン完了時にインジケータを消してリストを更新
+        if hasattr(self, "_scanning_label") and self._scanning_label:
+            self._scanning_label.destroy()
+            self._scanning_label = None
         self._apply_view_model(update_combo=True, rebuild_list=True)
 
     def run(self) -> None:
@@ -339,12 +379,16 @@ class UsbDevicesApp:
         self._apply_view_model(update_combo=True, rebuild_list=True)
 
     def _on_selection_change(self, selected: str) -> None:
-        self.view_model.select_by_name(selected)
+        self.view_model.select_by_key(selected)
         self._apply_view_model(update_combo=False, rebuild_list=True)
 
     def _reload_snapshots(self) -> None:
+        self._show_scanning_indicator()
+        threading.Thread(target=self._background_reload_scan, daemon=True).start()
+
+    def _background_reload_scan(self):
         self.view_model.refresh()
-        self._apply_view_model(update_combo=True, rebuild_list=True)
+        self.app.after(0, self._finish_scanning_indicator)
 
 
 def _get_service_singleton() -> UsbSnapshotService:
@@ -355,7 +399,7 @@ def _get_service_singleton() -> UsbSnapshotService:
         scanner = DeviceScanner(ble_timeout=5.0)
         repository = UsbSnapshotRepository(USB_JSON_PATH)
         _SERVICE_SINGLETON = UsbSnapshotService(scanner, repository)
-    return _SERVICE_SINGLETON
+    return _SERVICE_SINGLETO
 
 
 def get_com_port_for_device(
