@@ -30,8 +30,10 @@ import threading
 import time
 
 from core.com_ports import ComPortManager
+from core.bootstrap import setup_services as bootstrap_setup_services
 from core.device_models import UsbDeviceSnapshot, UsbSnapshotRepository, UsbSnapshotService
 from core.scanners import DeviceScanner
+from core.usb_ids import UsbIdsDatabase
 from ui.view_model import UsbDevicesViewModel
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -434,162 +436,6 @@ def get_com_port_for_device(
     return service.get_com_port_for_device(vid, pid, serial, refresh=False)
 
 
-def find_usb_ids_path() -> str:
-    """Return the first existing usb.ids path across supported platforms."""
-    candidates: List[Optional[str]] = []
-    env_path = os.environ.get("USB_IDS_PATH")
-    if env_path:
-        candidates.append(env_path)
-    candidates.append(os.path.join(BASE_DIR, "usb.ids"))
-    candidates.append(os.path.join(os.getcwd(), "usb.ids"))
-    candidates.extend([
-        "/usr/share/hwdata/usb.ids",
-        "/usr/share/misc/usb.ids",
-        "/var/lib/usbutils/usb.ids",
-        "/opt/homebrew/share/hwdata/usb.ids",
-        "/opt/local/share/hwdata/usb.ids",
-    ])
-    if sys.platform.startswith("win"):
-        program_data = os.environ.get("ProgramData")
-        if program_data:
-            candidates.append(os.path.join(program_data, "usb.ids"))
-    for path in candidates:
-        if path and os.path.exists(path):
-            return os.path.abspath(path)
-    return os.path.join(BASE_DIR, "usb.ids")
-
-
-def _normalize_usb_id(value: Any) -> Optional[str]:
-    """値をUSB ID表記(4桁の16進文字列)に正規化する。"""
-    if value is None:
-        return None
-    if isinstance(value, int):
-        return format(value, "04x")
-    text = str(value).strip().lower()
-    if text.startswith("0x"):
-        text = text[2:]
-    return text.zfill(4)
-
-
-class UsbIdsDatabase:
-    """
-    usb.idsファイルをパースし、ベンダーID・プロダクトIDから名称を解決するクラス。
-    - reload(): キャッシュ再構築
-    - lookup(vid, pid): ベンダー名・製品名取得
-    """
-
-    """
-    ・core/に移すメリット
-        サービス層や他モジュールから独立して再利用しやすくなる
-        usb_util_gui.py がエントリーポイントやUIロジック中心になり、責務がより整理される
-        将来的に CLI/サービス側からも共通利用したい場合に import 関係がわかりやすい
-    ・core/に移すデメリット
-        現状 UsbIdsDatabase は GUI/CLI のみが直接利用しており、 
-        core のサービス層やスキャナ層からは参照していないcore 側に移すと、
-        core 内で usb.ids ファイル探索パスをどう扱うか
-        （現状は BASE_DIR を usb_util_gui.py で管理）整理が必要
-        モジュール依存の整理次第では循環参照が生じる可能性がある（UsbDeviceSnapshot.resolve_names が UsbIdsDatabase を参照し、usb_util_gui.py 側から import しているため）
-    """
-
-    # usb.idsのパスを受け取り、ベンダー/プロダクト名の辞書を構築
-    def __init__(self, ids_path: Optional[str] = None) -> None:
-        """usb.idsのパスを保持し、後続処理のためのキャッシュ領域を初期化する。"""
-        # 初期化。ids_pathはusb.idsファイルのパス
-        self.ids_path = ids_path or find_usb_ids_path()
-        self._cache: Optional[Dict[str, Dict[str, Any]]] = None
-
-    def reload(self) -> None:
-        """内部キャッシュを無効化し、次回lookup時に再パースさせる。"""
-        # キャッシュをクリアして再パース可能にする
-        self._cache = None
-
-    def lookup(self, vid: Any, pid: Any) -> Tuple[Optional[str], Optional[str]]:
-        """
-        ベンダーID・プロダクトIDを受け取り、ベンダー名・製品名を返却する。
-        一致する情報がなければタプルの要素はいずれもNoneとなる。
-        """
-        # ベンダーID・プロダクトIDから名称を取得
-        vendors = self._ensure_cache()
-        norm_vid = _normalize_usb_id(vid)
-        norm_pid = _normalize_usb_id(pid)
-        if norm_vid is None or norm_pid is None:
-            return None, None
-        vendor_entry = vendors.get(norm_vid)
-        if not vendor_entry:
-            return None, None
-        vendor_name = vendor_entry.get("name")
-        product_entry = vendor_entry["products"].get(norm_pid)
-        product_name = product_entry.get("name") if product_entry else None
-        return vendor_name, product_name
-
-    def _ensure_cache(self) -> Dict[str, Dict[str, Any]]:
-        """キャッシュが未構築であればusb.idsを読み込み辞書へ展開する。"""
-        # キャッシュがなければパースして構築
-        if self._cache is None:
-            self._cache = self._parse_usb_ids(self.ids_path)
-        return self._cache
-
-    @staticmethod
-    def _parse_usb_ids(ids_path: str) -> Dict[str, Dict[str, Any]]:
-        """usb.idsファイルを逐次読み込み、ベンダー・プロダクト階層の辞書を生成する。"""
-        # usb.idsファイルをパースして辞書化
-        vendors: Dict[str, Dict[str, Any]] = {}
-        current_vendor: Optional[str] = None
-        current_product: Optional[str] = None
-        try:
-            with open(ids_path, "r", encoding="utf-8") as infile:
-                for raw_line in infile:
-                    line = raw_line.rstrip("\n")
-                    if not line or line.startswith("#"):
-                        continue
-                    if line.startswith("\t\t"):
-                        # インターフェース情報
-                        if current_vendor is None or current_product is None:
-                            continue
-                        parts = line.strip().split(None, 1)
-                        if not parts:
-                            continue
-                        interface_code = parts[0].lower()
-                        interface_name = parts[1].strip() if len(parts) > 1 else ""
-                        product_entry = vendors[current_vendor]["products"].setdefault(
-                            current_product, {"name": "", "interfaces": []}
-                        )
-                        product_entry["interfaces"].append(
-                            {"code": interface_code, "name": interface_name}
-                        )
-                        continue
-                    if line.startswith("\t"):
-                        # プロダクト情報
-                        if current_vendor is None:
-                            continue
-                        parts = line.strip().split(None, 1)
-                        if not parts:
-                            continue
-                        product_id = _normalize_usb_id(parts[0])
-                        product_name = parts[1].strip() if len(parts) > 1 else ""
-                        vendors[current_vendor]["products"][product_id] = {
-                            "name": product_name,
-                            "interfaces": [],
-                        }
-                        current_product = product_id
-                        continue
-                    # ベンダー情報
-                    parts = line.split(None, 1)
-                    if not parts:
-                        continue
-                    vendor_id = _normalize_usb_id(parts[0])
-                    vendor_name = parts[1].strip() if len(parts) > 1 else ""
-                    vendors.setdefault(vendor_id, {"name": vendor_name, "products": {}})
-                    vendors[vendor_id]["name"] = vendor_name
-                    current_vendor = vendor_id
-                    current_product = None
-        except OSError:
-            return {}
-        return vendors
-
-
-
-
 def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
     """CLI用の引数を定義し、与えられたargvからNamespaceを生成する。"""
     parser = argparse.ArgumentParser(description="USB device viewer and identifier")
@@ -644,20 +490,6 @@ def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
         help="環境診断を行い、検出したUSBスナップショットとCOMポート情報を表示する",
     )
     return parser.parse_args(argv)
-
-
-def setup_services() -> Tuple[UsbSnapshotService, List[UsbDeviceSnapshot], Optional[str]]:
-    """スキャナ・リポジトリ・サービスを組み立て、最新スナップショットを取得する。"""
-    scanner = DeviceScanner(ble_timeout=5.0)
-    repository = UsbSnapshotRepository(USB_JSON_PATH)
-    service = UsbSnapshotService(scanner, repository)
-    snapshots, scan_error = service.refresh()
-    print(f"[DEBUG] scan() snapshots count: {len(snapshots)}")
-    if not snapshots:
-        print("[DEBUG] USBデバイスが1つも取得できませんでした")
-    if scan_error:
-        print(scan_error, file=sys.stderr)
-    return service, snapshots, scan_error
 
 
 def run_cli(service: UsbSnapshotService, ids_db: UsbIdsDatabase, args: argparse.Namespace) -> int:
@@ -802,7 +634,7 @@ def run_gui(
 def main(argv: Optional[List[str]] = None) -> None:
     """CLI経路とGUI経路を切り替えつつ、USB情報ツールのエントリーポイントを提供する。"""
     args = parse_args(argv)
-    service, snapshots, scan_error = setup_services()
+    service, snapshots, scan_error = bootstrap_setup_services(USB_JSON_PATH)
     ids_db = UsbIdsDatabase()
 
     if args.self_test:

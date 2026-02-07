@@ -9,7 +9,7 @@ COM Port Inspector (FULL) - PowerShell不要版 (Windows)
 依存:
   pip install pyserial wmi
 実行:
-  python com_port_inspector_full.py
+  python tools/diagnostics/com_analyze.py
 """
 
 

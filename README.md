@@ -13,6 +13,19 @@ USB-utilは、接続済みのUSBデバイスをスキャンし、取得した詳
 - WindowsではWMIを用いたハブ/ポート連鎖・USBコントローラ名の自動解析
 - Serial / Port Path / BUS/Address を組み合わせたクロスプラットフォームな識別タグ生成
 
+## USB/BLE情報モデル
+
+本ツールは USB と BLE で取得できる情報の性質が異なる点を前提に、共通スナップショットへ統合して扱います。
+
+- USB（実装済み）: VID/PID、Manufacturer/Product、Serial、Bus/Address、Port Path、Descriptor情報
+- BLE（実装済み）: BLE Address、デバイス名、RSSI、Service UUIDs
+
+補足:
+
+- USB は物理接続とディスクリプタを中心とした情報体系です。
+- BLE は無線広告情報とサービス情報を中心とした情報体系です。
+- ベンダー名/製品名の厳密な補完は主に USB（`usb.ids`）で行います。
+
 ## 動作要件
 - Python 3.9 以降
 - macOS/Linux: libusb 1.0（PyUSBのバックエンドとして利用）
@@ -98,7 +111,7 @@ if com_port:
 
 ```python
 # other_module.py からの利用サンプル
-from main import get_com_port_for_device
+from usb_util_gui import get_com_port_for_device
 
 vid = "0x1234"
 pid = "0x5678"

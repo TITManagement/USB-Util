@@ -8,7 +8,7 @@ PowerShell 不使用。WMI + pyserial だけで
 を行い、「どのハブの何番ポートか」をできるだけ具体的に出力する。
 
 依存: pip install pyserial wmi
-実行 (Windowsのみ): python com_usb_topology_wmi.py
+実行 (Windowsのみ): python tools/diagnostics/com_usb_topology_wmi.py
 """
 
 

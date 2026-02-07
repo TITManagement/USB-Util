@@ -23,7 +23,7 @@ where = ["."]
 include = ["core", "ui"]
 
 [tool.setuptools]
-py-modules = ["main", "com_usb_topology_wmi"]
+py-modules = ["usb_util_gui"]
 
 [tool.metadata]
 author = "Takaya Inoue"
