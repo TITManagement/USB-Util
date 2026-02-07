@@ -1,6 +1,0 @@
-#!/Users/tinoue/Development.local/app/AiLab/USB-util/.venv_USB-Util/bin/python
-import sys
-from serial.tools.list_ports import main
-if __name__ == '__main__':
-    sys.argv[0] = sys.argv[0].removesuffix('.exe')
-    sys.exit(main())

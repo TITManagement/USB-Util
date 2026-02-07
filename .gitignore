@@ -1,7 +1,9 @@
 .DS_Store
 usb_devices.json
 __pycache__/
-
+.venv_USB-Util
+.venv/
 # build artifacts
 /dist
+/build/
 /usb_util.egg-info

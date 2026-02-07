@@ -2,11 +2,21 @@
 requires = ["setuptools>=61"]
 build-backend = "setuptools.build_meta"
 
+
 [project]
 name = "usb-util"
 version = "0.1.0"
 description = "USB utility helpers"
 requires-python = ">=3.8"
+dependencies = [
+	"customtkinter>=5.2.0",
+	"Pillow>=10.0.0",
+	"aist_guiparts @ file:../../lab_automation_libs/ak_GUIparts",
+	"pyusb>=1.2.1",
+	"pyserial>=3.5",
+	"ak_communication @ file:../../lab_automation_libs/ak_communication",
+	"bleak>=0.21.0"
+]
 
 [tool.setuptools.packages.find]
 where = ["."]
@@ -14,3 +24,7 @@ include = ["core", "ui"]
 
 [tool.setuptools]
 py-modules = ["main", "com_usb_topology_wmi"]
+
+[tool.metadata]
+author = "Takaya Inoue"
+copyright = "AUTO kobo"
