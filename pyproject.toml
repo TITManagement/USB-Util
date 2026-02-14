@@ -5,16 +5,16 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "usb-util"
-version = "0.1.0"
+version = "0.1.1"
 description = "USB utility helpers"
 requires-python = ">=3.8"
 dependencies = [
 	"customtkinter>=5.2.0",
 	"Pillow>=10.0.0",
-	"aist_guiparts @ file:../../lab_automation_libs/ak_GUIparts",
+	"aist_guiparts @ file:../../lab_automation_libs/autokobopy/autokobopy/ak_GUIparts",
 	"pyusb>=1.2.1",
 	"pyserial>=3.5",
-	"ak_communication @ file:../../lab_automation_libs/ak_communication",
+	"ak_communication @ file:../../lab_automation_libs/autokobopy/autokobopy/ak_communication",
 	"bleak>=0.21.0"
 ]
 

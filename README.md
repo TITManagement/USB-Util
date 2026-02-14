@@ -1,5 +1,17 @@
 # USB-util
 
+<!-- README_LEVEL: L2 -->
+
+<div align="center">
+
+[![Python](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/)
+[![License](https://img.shields.io/badge/license-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+**AiLab Project Documentation**
+
+</div>
+
+
 USB-utilは、接続済みのUSBデバイスをスキャンし、取得した詳細情報をGUIで閲覧できるPythonツールです。macOS/LinuxではPyUSB+libusbを通じてディスクリプタを直接取得し、WindowsではWMI経由でドライバ差し替えなしにCOMポートへ紐付けられるUSB情報を収集します。`usb.ids`データベースでベンダー名・製品名も補完し、スキャン・永続化・表示を責務分離したサービス層＋ViewModel構成を採用しています。
 
 ## 主な機能
