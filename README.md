@@ -70,17 +70,21 @@ pyserial   # COMポート列挙/シリアル通信を行う場合
 > **補足**: macOSでHomebrewを利用している場合は `brew install libusb`、Linuxでは各ディストリビューションのパッケージマネージャーから `libusb-1.0` をインストールしてください。WindowsではWMIサービスが有効であれば追加のドライバ導入は不要です。
 
 ## セットアップ
-1. 必要なライブラリをインストールします。
+1. 仮想環境を作成して有効化します。
    ```zsh
-   python -m venv .venv
-   source .venv/bin/activate  # Windowsは .venv\Scripts\activate
-   pip install customtkinter
-   pip install pyusb  # macOS/Linuxの場合
-   pip install wmi    # Windowsの場合
-   pip install pyserial  # COMポートを扱う場合
+   python -m venv .venv_USB-Util
+   source .venv_USB-Util/bin/activate  # Windowsは .venv_USB-Util\Scripts\activate
    ```
-2. `usb.ids` をプロジェクトルートに配置するか、環境変数 `USB_IDS_PATH` で外部の`usb.ids`ファイルを指定します。  
+2. プロジェクト依存をインストールします。
+   ```zsh
+   python -m pip install -e .
+   python -m pip check
+   ```
+3. `python -m pip -V` を実行し、`.venv_USB-Util` 配下の pip が使われていることを確認します。
+4. `usb.ids` をプロジェクトルートに配置するか、環境変数 `USB_IDS_PATH` で外部の`usb.ids`ファイルを指定します。  
    代表的な設置場所（Linux, macOS）は `/usr/share/hwdata/usb.ids` 等です。
+> **依存更新ルール（再発防止）**  
+> `ak_communication` / `aist_guiparts` を更新した場合は、対象パッケージの version を上げた上で `lab_automation_libs/internal-PyPI/dist/` の wheel を更新してください。同一バージョンの差し替えはキャッシュ衝突の原因になります。
 
 ## 使い方
 1. Python環境をアクティブにした状態で `usb_util_gui.py` を実行します。

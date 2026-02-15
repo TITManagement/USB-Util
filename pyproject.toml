@@ -1,20 +1,24 @@
 [build-system]
-requires = ["setuptools>=61"]
+requires = [
+	"setuptools @ file:../../lab_automation_libs/internal-PyPI/dist/setuptools-81.0.0-py3-none-any.whl",
+	"packaging @ file:../../lab_automation_libs/internal-PyPI/dist/packaging-26.0-py3-none-any.whl"
+]
 build-backend = "setuptools.build_meta"
 
 
 [project]
 name = "usb-util"
 version = "0.1.1"
+license = { text = "MIT" }
 description = "USB utility helpers"
 requires-python = ">=3.8"
 dependencies = [
 	"customtkinter>=5.2.0",
 	"Pillow>=10.0.0",
-	"aist_guiparts @ file:../../lab_automation_libs/autokobopy/autokobopy/ak_GUIparts",
+	"aist_guiparts @ file:../../lab_automation_libs/internal-PyPI/dist/aist_guiparts-0.1.0-py3-none-any.whl",
 	"pyusb>=1.2.1",
 	"pyserial>=3.5",
-	"ak_communication @ file:../../lab_automation_libs/autokobopy/autokobopy/ak_communication",
+	"ak_communication @ file:../../lab_automation_libs/internal-PyPI/dist/ak_communication-0.1.0-py3-none-any.whl",
 	"bleak>=0.21.0"
 ]
 
