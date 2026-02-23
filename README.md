@@ -70,6 +70,23 @@ pyserial   # COMポート列挙/シリアル通信を行う場合
 > **補足**: macOSでHomebrewを利用している場合は `brew install libusb`、Linuxでは各ディストリビューションのパッケージマネージャーから `libusb-1.0` をインストールしてください。WindowsではWMIサービスが有効であれば追加のドライバ導入は不要です。
 
 ## セットアップ
+#### 【重要】pip index一元管理について
+依存解決の再現性向上のため、pip の index 設定は  
+`$AILAB_ROOT/lab_automation_libs/internal-PyPI/pip.conf.local` を正本とします。
+
+ローカル環境では `AILAB_ROOT` を各マシンで設定してから `PIP_CONFIG_FILE` を指定してください。
+```bash
+export AILAB_ROOT=/path/to/AiLab
+export PIP_CONFIG_FILE="$AILAB_ROOT/lab_automation_libs/internal-PyPI/pip.conf.local"
+```
+
+CI では `PIP_CONFIG_FILE` 固定ではなく、環境変数で index を注入してください。
+```bash
+export PIP_INDEX_URL="http://<internal-pypi>/simple"
+export PIP_EXTRA_INDEX_URL="https://pypi.org/simple"
+export PIP_TRUSTED_HOST="<internal-pypi-host>"
+```
+
 1. 仮想環境を作成して有効化します。
    ```zsh
    python -m venv .venv_USB-Util
