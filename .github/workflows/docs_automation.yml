@@ -1,0 +1,62 @@
+name: Docs Automation
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "scaffold or validate"
+        required: true
+        default: "validate"
+      apply_all:
+        description: "apply scaffold to all docs targets (true/false)"
+        required: true
+        default: "false"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: docs-automation-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  docs-automation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Validate docs baseline
+        if: ${{ inputs.mode == 'validate' }}
+        run: |
+          test -f README.md
+      - name: Scaffold docs (dry-run)
+        if: ${{ inputs.mode == 'scaffold' && inputs.apply_all != 'true' }}
+        run: |
+          echo "[dry-run] would create docs/start_here.md if missing"
+          if [ ! -f docs/start_here.md ]; then
+            echo "missing: docs/start_here.md"
+          fi
+      - name: Scaffold docs (apply all)
+        if: ${{ inputs.mode == 'scaffold' && inputs.apply_all == 'true' }}
+        run: |
+          mkdir -p docs
+          if [ ! -f docs/start_here.md ]; then
+            cat > docs/start_here.md <<'EOF'
+# Start Here
+
+- Setup: README.md を参照
+- Run: プロジェクトREADMEの起動手順に従ってください
+EOF
+          fi
+      - name: Commit and push when scaffold applied
+        if: ${{ inputs.mode == 'scaffold' && inputs.apply_all == 'true' }}
+        run: |
+          if ! git diff --quiet; then
+            git add docs/start_here.md
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git commit -m "chore: apply docs scaffold"
+            git push
+          fi

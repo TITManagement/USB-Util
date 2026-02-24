@@ -1,29 +1,51 @@
 name: Update OSS Licenses
 
-
 on:
   push:
     branches: [main]
+    paths:
+      - "pyproject.toml"
+      - ".github/workflows/oss_licenses.yml"
   workflow_dispatch:
 
+permissions:
+  contents: write
+
+concurrency:
+  group: oss-licenses-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  update-notice:
+  update-oss-licenses:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.9"
-      - name: Install dependencies
+          python-version: "3.11"
+      - name: Generate OSS_LICENSES.md from pyproject dependencies
         run: |
-          python -m venv .venv
-          . .venv/bin/activate
-          pip install -e .
-          pip install pip-licenses
-      - name: Generate OSS_LICENSES.md
-        run: |
-          . .venv/bin/activate
-          pip-licenses --format=markdown > OSS_LICENSES.md
+          python - <<'PY'
+          from datetime import datetime
+          import tomllib
+          from pathlib import Path
+
+          pyproject = tomllib.loads(Path("pyproject.toml").read_text(encoding="utf-8"))
+          deps = pyproject.get("project", {}).get("dependencies", [])
+
+          lines = [
+              "# OSS_LICENSES",
+              "",
+              f"Generated: {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')} UTC",
+              "",
+              "| Package | License | Notes |",
+              "|---|---|---|",
+          ]
+          for dep in deps:
+              pkg = dep.split(";")[0].strip().split()[0]
+              lines.append(f"| {pkg} | UNKNOWN | derived from pyproject.toml |")
+          Path("OSS_LICENSES.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
+          PY
       - name: Commit and push if changed
         run: |
           if ! git diff --quiet; then

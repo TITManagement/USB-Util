@@ -1,0 +1,40 @@
+name: Internal PyPI Governance
+
+on:
+  pull_request:
+    paths:
+      - "pyproject.toml"
+      - ".github/workflows/internal-pypi-governance.yml"
+  push:
+    branches: [main]
+    paths:
+      - "pyproject.toml"
+      - ".github/workflows/internal-pypi-governance.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-dependency-governance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Validate pyproject dependency governance
+        run: |
+          python - <<'PY'
+          import tomllib
+          from pathlib import Path
+
+          pyproject = tomllib.loads(Path("pyproject.toml").read_text(encoding="utf-8"))
+          deps = pyproject.get("project", {}).get("dependencies", [])
+          banned = [d for d in deps if "git+" in d or "http://" in d or "https://" in d]
+          if banned:
+              raise SystemExit(f"Disallowed dependency source found: {banned}")
+          print(f"Dependency governance check passed. deps={len(deps)}")
+          PY
+      - name: Detect repository drift
+        run: git diff --exit-code
