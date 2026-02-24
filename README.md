@@ -1,3 +1,4 @@
+
 # USB-util
 
 <!-- README_LEVEL: L2 -->
@@ -11,43 +12,81 @@
 
 </div>
 
+## 概要
 
-USB-utilは、接続済みのUSBデバイスをスキャンし、取得した詳細情報をGUIで閲覧できるPythonツールです。macOS/LinuxではPyUSB+libusbを通じてディスクリプタを直接取得し、WindowsではWMI経由でドライバ差し替えなしにCOMポートへ紐付けられるUSB情報を収集します。`usb.ids`データベースでベンダー名・製品名も補完し、スキャン・永続化・表示を責務分離したサービス層＋ViewModel構成を採用しています。
+USB-utilは、接続済みのUSBデバイス/BLEデバイスをスキャンし、詳細情報をGUIで閲覧できるクロスプラットフォーム対応のPythonツールです。macOS/LinuxではPyUSB+libusb、WindowsではWMI経由でCOMポート情報も取得し、usb.idsによるベンダー/製品名補完やスナップショット永続化、責務分離設計を特徴とします。
 
 ## 主な機能
-- macOS/Linux: PyUSBを用いたUSBデバイスのスキャンとメタデータ取得
-- Windows: WMI経由でドライバ差し替え不要のUSBメタデータ取得とCOMポート突合
-- `usb.ids`と照合したベンダー/プロダクト名の自動解決
-- 取得したスナップショットの`usb_devices.json`への保存
-- CustomTkinterベースのGUIでのデバイス切り替え表示とJSONプレビュー（ViewとViewModelを分離）
-- バックエンドや権限不足などで発生したエラーメッセージの明示表示
-- COMポート情報の自動逆引き（`core/com_ports.py` 内のヘルパーを利用）
-- WindowsではWMIを用いたハブ/ポート連鎖・USBコントローラ名の自動解析
-- Serial / Port Path / BUS/Address を組み合わせたクロスプラットフォームな識別タグ生成
 
-## USB/BLE情報モデル
+- macOS/Linux: PyUSBによるUSBデバイススキャン・メタデータ取得
+- Windows: WMI経由でCOMポート突合・USB情報取得
+- usb.idsによるベンダー/プロダクト名自動解決
+- 取得スナップショットのusb_devices.json保存
+- CustomTkinterベースのGUIでのデバイス切替・JSONプレビュー
+- エラーメッセージの明示表示
+- COMポート情報の自動逆引き（core/com_ports.py利用）
+- Windows: ハブ/ポート連鎖・USBコントローラ名自動解析
+- Serial/Port Path/BUS/Addressを組み合わせた識別タグ生成
 
-本ツールは USB と BLE で取得できる情報の性質が異なる点を前提に、共通スナップショットへ統合して扱います。
+## 技術仕様・動作環境
 
-- USB（実装済み）: VID/PID、Manufacturer/Product、Serial、Bus/Address、Port Path、Descriptor情報
-- BLE（実装済み）: BLE Address、デバイス名、RSSI、Service UUIDs
+- Python: 3.9以降
+- macOS/Linux: libusb 1.0（PyUSBバックエンド）
+- Windows: WMIサービス有効な環境（WinUSB/Zadig等不要）
+- ネイティブライブラリのビルド/読み込みに必要な環境
 
-補足:
+## インストール
 
-- USB は物理接続とディスクリプタを中心とした情報体系です。
-- BLE は無線広告情報とサービス情報を中心とした情報体系です。
-- ベンダー名/製品名の厳密な補完は主に USB（`usb.ids`）で行います。
+#### 【重要】pip index一元管理について
+依存解決の再現性向上のため、pip の index 設定は  
+`$AILAB_ROOT/lab_automation_libs/internal-PyPI/pip.conf.local` を正本とします。
 
-## 動作要件
-- Python 3.9 以降
-- macOS/Linux: libusb 1.0（PyUSBのバックエンドとして利用）
-- Windows: WMI サービスが有効な環境（WinUSB/Zadig等は不要）
-- ネイティブライブラリのビルド/読み込みに必要な環境（OS付属またはパッケージ管理システムでインストール）
+ローカル環境では `AILAB_ROOT` を各マシンで設定してから `PIP_CONFIG_FILE` を指定してください。
+```bash
+export AILAB_ROOT=/path/to/AiLab
+export PIP_CONFIG_FILE="$AILAB_ROOT/lab_automation_libs/internal-PyPI/pip.conf.local"
+```
+
+CI では `PIP_CONFIG_FILE` 固定ではなく、環境変数で index を注入してください。
+```bash
+export PIP_INDEX_URL="http://<internal-pypi>/simple"
+export PIP_EXTRA_INDEX_URL="https://pypi.org/simple"
+export PIP_TRUSTED_HOST="<internal-pypi-host>"
+```
 
 ### OS別セットアップ
 
 #### macOS
 - Homebrewで `brew install libusb`
+
+## 使い方
+
+python main.py
+
+## USB/BLE情報モデル
+
+USB: VID/PID、Manufacturer/Product、Serial、Bus/Address、Port Path、Descriptor情報  
+BLE: BLE Address、デバイス名、RSSI、Service UUIDs
+
+## 構成
+
+```
+USB-util/
+├── src/
+├── docs/
+├── scripts/
+├── pyproject.toml
+├── LICENSE
+└── README.md
+```
+
+## コントリビューション
+
+バグ報告・機能要望・プルリクエストを歓迎します。
+
+## ライセンス
+
+MIT License — 詳細は [LICENSE](LICENSE) をご覧ください。
 
 #### Ubuntu 24.04
 - `sudo apt update && sudo apt install libusb-1.0-0`
