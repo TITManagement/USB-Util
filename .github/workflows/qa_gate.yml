@@ -1,0 +1,43 @@
+name: QA Gate
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: qa-gate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  qa-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: lint
+        run: |
+          python -m compileall -q .
+
+      - name: test
+        run: |
+          if [ -d tests ]; then
+            python -m unittest discover -s tests -p "test*.py"
+          else
+            echo "tests directory not found; skip"
+          fi
+
+      - name: build
+        run: |
+          if [ -f pyproject.toml ]; then
+            python -m pip install --upgrade pip
+            python -m pip install build
+            python -m build --sdist --wheel --outdir /tmp/dist .
+          else
+            echo "pyproject.toml not found; skip"
+          fi
