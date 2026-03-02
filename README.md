@@ -302,3 +302,23 @@ MIT License
 
 ## 作者
 - TITManagement　2025
+
+## 対象者
+- 運用担当者: 日常運用・手順実行を行う担当者
+- 開発者: 機能追加・保守を行う担当者
+- 検証担当者: 実機/テスト環境で動作確認を行う担当者
+
+## 依存関係
+- Python: `pyproject.toml` の `requires-python` に従う
+- 主要ライブラリ: `pyproject.toml` の `dependencies` を参照
+- pip index設定: `$AILAB_ROOT/lab_automation_module/config/pip/pip.conf.local` を正本とする
+
+## 最短セットアップ
+`bash` / `zsh` で以下を実行。
+```bash
+export AILAB_ROOT=/path/to/AiLab
+export PIP_CONFIG_FILE="$AILAB_ROOT/lab_automation_module/config/pip/pip.conf.local"
+python -m venv .venv_USB-Util
+source .venv_USB-Util/bin/activate
+python -m pip install -e .
+```
