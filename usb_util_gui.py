@@ -41,7 +41,7 @@ USB_JSON_PATH = os.path.join(BASE_DIR, "usb_devices.json")
 _SERVICE_SINGLETON: Optional[UsbSnapshotService] = None
 
 AK_GUIPARTS_ROOT = os.path.abspath(
-    os.path.join(BASE_DIR, "..", "lab_automation_api", "libs", "ak_GUIparts")
+    os.path.join(BASE_DIR, "..", "lab_automation_libs", "aist-guiparts")
 )
 if AK_GUIPARTS_ROOT not in sys.path and os.path.isdir(AK_GUIPARTS_ROOT):
     sys.path.insert(0, AK_GUIPARTS_ROOT)
