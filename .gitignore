@@ -7,3 +7,7 @@ __pycache__/
 /dist
 /build/
 /usb_util.egg-info
+
+# === local dev artifacts ===
+.vscode/
+pip.conf
