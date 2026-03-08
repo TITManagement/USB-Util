@@ -11,3 +11,5 @@ __pycache__/
 # === local dev artifacts ===
 .vscode/
 pip.conf
+
+.venv_USB-Util310
