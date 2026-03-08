@@ -3,6 +3,17 @@
 
 <!-- README_LEVEL: L2 -->
 
+| 項目 | 内容 |
+| --- | --- |
+| 文書ID | `AILAB-LAB-AUTOMATION-MODULE-USB-UTIL-README` |
+| 作成日 | 2026-03-08 |
+| 作成者 | tinoue |
+| 最終更新日 | 2026-03-08 |
+| 最終更新者 | tinoue (with Codex) |
+| 版数 | v1.0 |
+| 状態 | 運用中 |
+
+
 <div align="center">
 
 [![Python](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/)
