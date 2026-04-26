@@ -1,0 +1,83 @@
+name: Docs Book Automation
+
+on:
+  workflow_dispatch:
+    inputs:
+      book_format:
+        description: "book output format: none/pdf/docx/both"
+        required: false
+        default: "none"
+      collection_profile:
+        description: "chapter collection profile: all/spec-design"
+        required: false
+        default: "all"
+  push:
+    branches: [main]
+    paths:
+      - 'docs/**'
+      - 'README.md'
+      - 'scripts/docs/**'
+      - '.github/workflows/docs_book.yml'
+    paths-ignore:
+      - 'docs/_book/**'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: docs-book-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-book:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Build docs book (if docs exists)
+        run: |
+          if [ ! -d docs ]; then
+            echo "::notice::docs ディレクトリがないためスキップします。"
+            exit 0
+          fi
+          python scripts/docs/build_docs_book.py \
+            --format "${{ inputs.book_format || 'none' }}" \
+            --collection-profile "${{ inputs.collection_profile || 'all' }}"
+
+      - name: Upload docs book artifacts
+        if: ${{ hashFiles('docs/_book/*') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: docs-book
+          path: docs/_book
+
+      - name: Commit and push docs book (main push)
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && github.actor != 'github-actions[bot]' }}
+        run: |
+          if [ ! -d docs/_book ]; then
+            echo "::notice::docs/_book がないためコミット対象なし。"
+            exit 0
+          fi
+
+          if git diff --quiet -- docs/_book; then
+            echo "::notice::docs/_book の差分はありません。"
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/_book
+
+          if git diff --cached --quiet; then
+            echo "::notice::ステージ済み差分はありません。"
+            exit 0
+          fi
+
+          git commit -m "docs(book): regenerate docs/_book artifacts"
+          git push

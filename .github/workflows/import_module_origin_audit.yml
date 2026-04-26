@@ -1,0 +1,105 @@
+name: Import Module Origin Audit
+
+on:
+  workflow_dispatch:
+    inputs:
+      include_optional_groups:
+        description: "optional dependency groups to include (space-separated, e.g. 'dev robot')"
+        required: false
+        default: "dev"
+  pull_request:
+    paths:
+      - 'pyproject.toml'
+      - 'ops/ci/**'
+      - '.github/workflows/import_module_origin_audit.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'pyproject.toml'
+      - 'ops/ci/**'
+      - '.github/workflows/import_module_origin_audit.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: import-origin-audit-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    env:
+      INTERNAL_PYPI_INDEX_URL: ${{ vars.INTERNAL_PYPI_INDEX_URL }}
+      INTERNAL_REQUIRED_PACKAGES: ${{ vars.INTERNAL_REQUIRED_PACKAGES }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install helper deps
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install tomli
+
+      - name: Install project and emit pip report
+        run: |
+          if [ -n "${INTERNAL_PYPI_INDEX_URL:-}" ]; then
+            export PIP_INDEX_URL="$INTERNAL_PYPI_INDEX_URL"
+            export PIP_EXTRA_INDEX_URL="https://pypi.org/simple"
+          else
+            export PIP_INDEX_URL="https://pypi.org/simple"
+            unset PIP_EXTRA_INDEX_URL || true
+          fi
+
+          python -m pip install -e . --force-reinstall --no-cache-dir --report /tmp/pip-install-report-full.json
+
+      - name: Generate origin audit markdown
+        run: |
+          mkdir -p docs/operations
+          python ops/ci/generate_import_module_origin_audit.py \
+            --report /tmp/pip-install-report-full.json \
+            --pyproject pyproject.toml \
+            --output docs/operations/IMPORT_MODULE_ORIGIN_AUDIT.md \
+            --internal-index-url "${INTERNAL_PYPI_INDEX_URL:-}" \
+            --include-optional-groups ${{ inputs.include_optional_groups || 'dev' }}
+
+      - name: Verify internal packages (optional)
+        if: ${{ env.INTERNAL_REQUIRED_PACKAGES != '' }}
+        run: |
+          python ops/ci/verify_internal_pypi_sources.py \
+            --report /tmp/pip-install-report-full.json \
+            --internal-index-url "${INTERNAL_PYPI_INDEX_URL:-}" \
+            --require-internal ${INTERNAL_REQUIRED_PACKAGES}
+
+      - name: Upload audit artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: import-module-origin-audit
+          path: |
+            /tmp/pip-install-report-full.json
+            docs/operations/IMPORT_MODULE_ORIGIN_AUDIT.md
+
+      - name: Commit and push audit markdown (main push)
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && github.actor != 'github-actions[bot]' }}
+        run: |
+          if git diff --quiet -- docs/operations/IMPORT_MODULE_ORIGIN_AUDIT.md; then
+            echo "::notice::audit markdown の差分はありません。"
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/operations/IMPORT_MODULE_ORIGIN_AUDIT.md
+
+          if git diff --cached --quiet; then
+            echo "::notice::ステージ済み差分はありません。"
+            exit 0
+          fi
+
+          git commit -m "docs(audit): regenerate import module origin list"
+          git push
