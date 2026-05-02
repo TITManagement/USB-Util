@@ -16,3 +16,5 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: rhysd/actionlint@v1.7.7
+        with:
+          args: .github/workflows/lint-workflows.yml
